@@ -1,0 +1,122 @@
+/* Append or override depending on what you had, but usually we just append */
+.lobby-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  width: 100%;
+  max-width: 600px;
+}
+
+.room-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.room-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #ccc;
+}
+
+.room-code-badge {
+  background: var(--glass-bg);
+  padding: 0.5rem 2rem;
+  font-size: 2.5rem;
+  font-weight: 900;
+  letter-spacing: 0.5rem;
+  border-radius: 15px;
+  border: 2px dashed var(--accent-color);
+  color: var(--accent-color);
+  text-shadow: 0 0 10px rgba(244, 63, 94, 0.4);
+}
+
+.players-list {
+  width: 100%;
+  background: var(--glass-bg);
+  padding: 1.5rem;
+  border-radius: 15px;
+  border: 1px solid var(--glass-border);
+}
+
+.players-list h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 0.5rem;
+}
+
+.players-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.player-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.8rem;
+  border-radius: 10px;
+  transition: transform 0.2s;
+}
+
+.player-card:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.player-avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--glass-border);
+  transition: all 0.2s;
+}
+
+.player-avatar.speaking-glow {
+  border-color: #10b981; /* Emerald 500 */
+  box-shadow: 0 0 15px #10b981;
+  animation: bounce-speak 1s infinite alternate;
+}
+
+@keyframes bounce-speak {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.1); box-shadow: 0 0 25px #10b981; }
+}
+
+.player-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.player-name {
+  font-weight: bold;
+}
+
+.host-badge {
+  font-size: 0.7rem;
+  background: #eab308; /* Yellow 500 */
+  color: black;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-weight: 900;
+  margin-top: 0.2rem;
+  width: fit-content;
+}
+
+.waiting-text {
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.start-btn {
+  width: 100%;
+  padding: 1.2rem;
+  font-size: 1.3rem;
+  border-radius: 30px;
+}
