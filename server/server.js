@@ -184,8 +184,45 @@ io.on('connection', (socket) => {
         const room = rooms[roomCode];
         
         if (!room) return callback({ success: false, message: 'Room not found.' });
+
+        // Check if this is a reconnecting player (same username, disconnected)
+        const existingPlayer = room.players.find(p => p.username === profile.username && p.disconnected);
+        if (existingPlayer) {
+            existingPlayer.id = socket.id;
+            existingPlayer.disconnected = false;
+            existingPlayer.avatar = profile.avatar;
+            socket.join(roomCode);
+            io.to(roomCode).emit('lobby_update', room.players.map(p => ({...p, board: undefined})));
+            return callback({ success: true, roomCode, reconnected: true, gameState: room.state });
+        }
+
+        // Spectator: allow joining a game in progress as viewer
+        if (room.state !== 'waiting') {
+            const spectator = {
+                id: socket.id,
+                username: profile.username,
+                avatar: profile.avatar,
+                isHost: false,
+                isReady: true,
+                linesCompleted: 0,
+                hasWon: false,
+                isBot: false,
+                isSpectator: true
+            };
+            room.players.push(spectator);
+            socket.join(roomCode);
+            io.to(roomCode).emit('lobby_update', room.players.map(p => ({...p, board: undefined})));
+            return callback({
+                success: true,
+                roomCode,
+                spectator: true,
+                gameState: room.state,
+                calledNumbers: room.calledNumbers,
+                currentTurnId: room.players[room.turnIndex]?.id
+            });
+        }
+
         if (room.players.length >= 20) return callback({ success: false, message: 'Room is full.' });
-        if (room.state !== 'waiting') return callback({ success: false, message: 'Game already started.' });
 
         room.players.push({
             id: socket.id,
@@ -340,20 +377,46 @@ io.on('connection', (socket) => {
         console.log(`User disconnected: ${socket.id}`);
         for (const [roomCode, room] of Object.entries(rooms)) {
             const index = room.players.findIndex(p => p.id === socket.id);
-            if (index !== -1) {
+            if (index === -1) continue;
+
+            const player = room.players[index];
+
+            // If game is in progress, mark as disconnected (allow reconnect)
+            if (room.state === 'playing' || room.state === 'setup') {
+                player.disconnected = true;
+                io.to(roomCode).emit('lobby_update', room.players.map(p => ({...p, board: undefined})));
+
+                // Skip their turn if it's their turn
+                if (room.state === 'playing' && room.players[room.turnIndex]?.id === socket.id) {
+                    advanceTurn(room);
+                }
+
+                // Auto-remove after 60s if still disconnected
+                setTimeout(() => {
+                    if (rooms[roomCode] && player.disconnected) {
+                        room.players.splice(room.players.indexOf(player), 1);
+                        const humanPlayers = room.players.filter(p => !p.isBot);
+                        if (humanPlayers.length === 0) {
+                            delete rooms[roomCode];
+                        } else {
+                            if (room.turnIndex >= room.players.length) room.turnIndex = 0;
+                            io.to(roomCode).emit('lobby_update', room.players.map(p => ({...p, board: undefined})));
+                        }
+                    }
+                }, 60000);
+            } else {
+                // In lobby or finished, just remove
                 room.players.splice(index, 1);
-                
-                // If only bots remain, delete the room
                 const humanPlayers = room.players.filter(p => !p.isBot);
                 if (humanPlayers.length === 0) {
                     delete rooms[roomCode];
                 } else {
                     if (room.turnIndex >= room.players.length) room.turnIndex = 0;
-                    io.to(roomCode).emit('lobby_update', room.players.map(p=>({...p, board:undefined})));
+                    io.to(roomCode).emit('lobby_update', room.players.map(p => ({...p, board: undefined})));
                     
-                    if(room.state === 'playing') {
+                    if (room.state === 'playing') {
                          io.to(roomCode).emit('turn_update', { currentTurnId: room.players[room.turnIndex].id });
-                         if(room.players[room.turnIndex].isBot) {
+                         if (room.players[room.turnIndex].isBot) {
                             setTimeout(() => takeBotTurn(roomCode, room.players[room.turnIndex]), 2000);
                          }
                     }

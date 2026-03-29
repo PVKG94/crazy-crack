@@ -3,11 +3,14 @@ import './GameBoard.css';
 import TitleScore from './TitleScore';
 import { playSoundEffect } from '../utils/audio';
 
-export function GameBoard({ socket, roomCode, gameState, players, currentTurnId, myId, profile, onLeave }) {
+export function GameBoard({ socket, roomCode, gameState, players, currentTurnId, myId, profile, onLeave, isSpectator, spectatorCalledNumbers }) {
   const [board, setBoard] = useState(Array(100).fill(null));
-  const [calledNumbers, setCalledNumbers] = useState(new Set());
+  const [calledNumbers, setCalledNumbers] = useState(() => {
+    return spectatorCalledNumbers ? new Set(spectatorCalledNumbers) : new Set();
+  });
   const [lines, setLines] = useState(0);
   const [completedLinesArr, setCompletedLinesArr] = useState([]);
+  const [lastCalledNumber, setLastCalledNumber] = useState(null);
 
   useEffect(() => {
     socket.on('number_called', (data) => {
@@ -17,6 +20,9 @@ export function GameBoard({ socket, roomCode, gameState, players, currentTurnId,
         newSet.add(data.number);
         return newSet;
       });
+      // Flash highlight
+      setLastCalledNumber(data.number);
+      setTimeout(() => setLastCalledNumber(null), 1200);
     });
 
     return () => {
@@ -83,11 +89,17 @@ export function GameBoard({ socket, roomCode, gameState, players, currentTurnId,
 
   const handleCellClick = (number) => {
     if (gameState !== 'playing') return;
+    if (isSpectator) return;
     if (currentTurnId !== myId) return; // Not my turn
     if (calledNumbers.has(number)) return; // Already called
     
     socket.emit('call_number', { roomCode, number });
   };
+
+  // Spectators skip setup
+  if (isSpectator && gameState === 'setup') {
+    return <div className="setup-container"><h3>⏳ Waiting for players to set up their boards...</h3></div>;
+  }
 
   // Setup Phase Render
   if (gameState === 'setup') {
@@ -122,7 +134,8 @@ export function GameBoard({ socket, roomCode, gameState, players, currentTurnId,
   }
 
   // Playing Phase Render
-  const isMyTurn = currentTurnId === myId;
+  const isMyTurn = !isSpectator && currentTurnId === myId;
+  const currentTurnPlayer = players.find(p => p.id === currentTurnId);
 
   return (
     <div className="game-container">
@@ -152,7 +165,9 @@ export function GameBoard({ socket, roomCode, gameState, players, currentTurnId,
         
         <div className="game-header">
             <h2 className={isMyTurn ? 'my-turn glow' : ''}>
-                {isMyTurn ? "IT'S YOUR TURN!" : "Waiting for turn..."}
+                {isSpectator
+                  ? `👁️ Spectating — ${currentTurnPlayer?.username || '...'}'s turn`
+                  : isMyTurn ? "IT'S YOUR TURN!" : "Waiting for turn..."}
             </h2>
         </div>
 
@@ -165,10 +180,11 @@ export function GameBoard({ socket, roomCode, gameState, players, currentTurnId,
 
              {board.map((num, i) => {
                  const isCalled = calledNumbers.has(num);
+                 const isFlashing = num === lastCalledNumber;
                  return (
                      <div 
                          key={i} 
-                         className={`grid-cell ${isCalled ? 'called' : ''} ${isMyTurn && !isCalled ? 'clickable' : ''}`}
+                         className={`grid-cell ${isCalled ? 'called' : ''} ${isMyTurn && !isCalled ? 'clickable' : ''} ${isFlashing ? 'just-called' : ''}`}
                          onClick={() => handleCellClick(num)}
                      >
                          {num}

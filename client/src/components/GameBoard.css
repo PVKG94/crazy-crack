@@ -76,6 +76,18 @@
   border: 1px solid var(--accent-color);
 }
 
+.grid-cell.just-called {
+  animation: cell-flash 1.2s ease;
+  z-index: 2;
+}
+
+@keyframes cell-flash {
+  0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.8); transform: scale(1); }
+  15% { box-shadow: 0 0 20px 6px rgba(251, 191, 36, 0.7); transform: scale(1.15); background: rgba(251, 191, 36, 0.4); }
+  40% { box-shadow: 0 0 12px 3px rgba(251, 191, 36, 0.4); transform: scale(1.05); }
+  100% { box-shadow: 0 0 0 0 transparent; transform: scale(1); }
+}
+
 .grid-cell.clickable:hover {
   background: var(--cell-hover-bg);
   transform: scale(1.1);

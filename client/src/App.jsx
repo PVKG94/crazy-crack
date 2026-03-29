@@ -48,6 +48,8 @@ function App() {
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [pendingJoinCode, setPendingJoinCode] = useState(null);
+  const [isSpectator, setIsSpectator] = useState(false);
+  const [spectatorCalledNumbers, setSpectatorCalledNumbers] = useState([]);
 
   useEffect(() => {
     function onConnect() { setIsConnected(true); }
@@ -221,7 +223,18 @@ function App() {
     socket.emit('join_room', { roomCode: code, profile }, (response) => {
        if (response.success) {
          setRoom(code);
-         setGameState('waiting');
+         if (response.spectator) {
+           // Joining as spectator mid-game
+           setIsSpectator(true);
+           setGameState(response.gameState);
+           setSpectatorCalledNumbers(response.calledNumbers || []);
+           if (response.currentTurnId) setCurrentTurnId(response.currentTurnId);
+         } else if (response.reconnected) {
+           // Reconnecting to existing game
+           setGameState(response.gameState);
+         } else {
+           setGameState('waiting');
+         }
        } else {
          alert(response.message);
        }
@@ -242,6 +255,8 @@ function App() {
       setGameState('waiting');
       setPlayers([]);
       setMyFinalLines(0);
+      setIsSpectator(false);
+      setSpectatorCalledNumbers([]);
       socket.disconnect(); // force disconnect
       socket.connect();    // reconnect clean
   };
@@ -294,6 +309,8 @@ function App() {
             myId={socket.id}
             profile={profile}
             onLeave={requestLeaveRoom}
+            isSpectator={isSpectator}
+            spectatorCalledNumbers={spectatorCalledNumbers}
         />
       ) : (
         <div className="finished-screen">
