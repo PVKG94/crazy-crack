@@ -51,8 +51,23 @@
 
 /* On mobile */
 @media (max-width: 500px) {
-  .grid-cell { font-size: 0.9rem; }
-  .grid-board { gap: 2px; padding: 4px; }
+  .grid-cell { font-size: 0.8rem; border-radius: 4px; }
+  .grid-board { gap: 2px; padding: 4px; border-radius: 8px; }
+  .game-header { margin-bottom: 1rem; }
+  .game-header h2 { font-size: 1.1rem; }
+  .players-strip { gap: 0.5rem; margin-bottom: 0.5rem; }
+  .strip-avatar-wrap { width: 36px; height: 36px; }
+  .strip-name { font-size: 0.55rem; max-width: 48px; }
+  .setup-container h3 { font-size: 1.1rem; }
+  .game-container { gap: 0.5rem; }
+}
+
+/* Very small phones */
+@media (max-width: 360px) {
+  .grid-cell { font-size: 0.65rem; }
+  .grid-board { gap: 1px; padding: 3px; }
+  .strip-avatar-wrap { width: 30px; height: 30px; }
+  .players-strip { gap: 0.3rem; }
 }
 
 .grid-cell.clickable {
@@ -157,17 +172,6 @@
   box-shadow: 0 0 12px rgba(52, 211, 153, 0.6);
 }
 
-.strip-avatar-wrap.speaking {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 0 var(--accent-color);
-  animation: mic-pulse 1.2s ease-in-out infinite;
-}
-
-@keyframes mic-pulse {
-  0% { box-shadow: 0 0 0 0 var(--accent-color); }
-  50% { box-shadow: 0 0 12px 6px var(--accent-color); }
-  100% { box-shadow: 0 0 0 0 var(--accent-color); }
-}
 
 .strip-avatar {
   width: 100%;

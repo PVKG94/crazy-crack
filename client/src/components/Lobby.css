@@ -1,4 +1,3 @@
-/* Append or override depending on what you had, but usually we just append */
 .lobby-container {
   display: flex;
   flex-direction: column;
@@ -21,6 +20,12 @@
   color: #ccc;
 }
 
+.room-code-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .room-code-badge {
   background: var(--glass-bg);
   padding: 0.5rem 2rem;
@@ -31,6 +36,32 @@
   border: 2px dashed var(--accent-color);
   color: var(--accent-color);
   text-shadow: 0 0 10px rgba(244, 63, 94, 0.4);
+}
+
+.copy-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
+  color: var(--text-color);
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.copy-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--accent-color);
+  transform: scale(1.05);
+}
+
+.copy-btn.copied {
+  background: rgba(52, 211, 153, 0.2);
+  border-color: #34d399;
+  color: #34d399;
 }
 
 .players-list {
@@ -62,6 +93,7 @@
   padding: 0.8rem;
   border-radius: 10px;
   transition: transform 0.2s;
+  position: relative;
 }
 
 .player-card:hover {
@@ -78,20 +110,10 @@
   transition: all 0.2s;
 }
 
-.player-avatar.speaking-glow {
-  border-color: #10b981; /* Emerald 500 */
-  box-shadow: 0 0 15px #10b981;
-  animation: bounce-speak 1s infinite alternate;
-}
-
-@keyframes bounce-speak {
-  0% { transform: scale(1); }
-  100% { transform: scale(1.1); box-shadow: 0 0 25px #10b981; }
-}
-
 .player-info {
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 .player-name {
@@ -100,13 +122,36 @@
 
 .host-badge {
   font-size: 0.7rem;
-  background: #eab308; /* Yellow 500 */
+  background: #eab308;
   color: black;
   padding: 0.1rem 0.4rem;
   border-radius: 4px;
   font-weight: 900;
   margin-top: 0.2rem;
   width: fit-content;
+}
+
+.kick-btn {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 900;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.kick-btn:hover {
+  background: rgba(239, 68, 68, 0.35);
+  border-color: #ef4444;
+  transform: scale(1.15);
 }
 
 .waiting-text {

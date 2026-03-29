@@ -291,6 +291,51 @@ io.on('connection', (socket) => {
         io.to(data.roomCode).emit('chat_message', data);
     });
 
+    socket.on('rematch', (roomCode) => {
+        const room = rooms[roomCode];
+        if (!room) return;
+        // Only host can trigger rematch
+        if (room.players[0]?.id !== socket.id) return;
+
+        // Reset room state
+        room.state = 'waiting';
+        room.calledNumbers = [];
+        room.turnIndex = 0;
+        room.players.forEach(p => {
+            p.isReady = p.isBot ? true : false;
+            p.linesCompleted = 0;
+            p.hasWon = false;
+            if (p.isBot) p.board = randomizeBoard();
+        });
+
+        io.to(roomCode).emit('rematch_started');
+        io.to(roomCode).emit('lobby_update', room.players.map(p => ({...p, board: undefined})));
+    });
+
+    socket.on('kick_player', (data) => {
+        const { roomCode, playerId } = data;
+        const room = rooms[roomCode];
+        if (!room) return;
+        // Only host can kick
+        if (room.players[0]?.id !== socket.id) return;
+        // Can't kick yourself
+        if (playerId === socket.id) return;
+        // Only kick during lobby
+        if (room.state !== 'waiting') return;
+
+        const idx = room.players.findIndex(p => p.id === playerId);
+        if (idx !== -1) {
+            const kicked = room.players.splice(idx, 1)[0];
+            // Notify the kicked player
+            io.to(playerId).emit('kicked_from_room');
+            // Make the kicked socket leave the room
+            const kickedSocket = io.sockets.sockets.get(playerId);
+            if (kickedSocket) kickedSocket.leave(roomCode);
+            // Update remaining players
+            io.to(roomCode).emit('lobby_update', room.players.map(p => ({...p, board: undefined})));
+        }
+    });
+
     socket.on('disconnect', () => {
         console.log(`User disconnected: ${socket.id}`);
         for (const [roomCode, room] of Object.entries(rooms)) {

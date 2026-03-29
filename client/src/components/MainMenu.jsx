@@ -1,9 +1,18 @@
 import { useState } from 'react';
 import './MainMenu.css';
 
+function loadStats() {
+  try {
+    const raw = localStorage.getItem('crazy_crack_stats');
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return { gamesPlayed: 0, wins: 0, totalLines: 0 };
+}
+
 export default function MainMenu({ profile, onCreateRoom, onJoinRoom, onPlayBot, onBack }) {
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [roomCode, setRoomCode] = useState('');
+  const stats = loadStats();
 
   const handleJoinSubmit = () => {
     if (roomCode.trim().length > 0) {
@@ -24,6 +33,31 @@ export default function MainMenu({ profile, onCreateRoom, onJoinRoom, onPlayBot,
         )}
         <h3>{profile.username}</h3>
       </div>
+
+      {/* Stats Bar */}
+      {stats.gamesPlayed > 0 && (
+        <div className="stats-bar">
+          <div className="stat-item">
+            <span className="stat-value">{stats.gamesPlayed}</span>
+            <span className="stat-label">Games</span>
+          </div>
+          <div className="stat-divider"></div>
+          <div className="stat-item">
+            <span className="stat-value">{stats.wins}</span>
+            <span className="stat-label">Wins</span>
+          </div>
+          <div className="stat-divider"></div>
+          <div className="stat-item">
+            <span className="stat-value">{stats.totalLines}</span>
+            <span className="stat-label">Lines</span>
+          </div>
+          <div className="stat-divider"></div>
+          <div className="stat-item">
+            <span className="stat-value">{stats.gamesPlayed > 0 ? Math.round((stats.wins / stats.gamesPlayed) * 100) : 0}%</span>
+            <span className="stat-label">Win Rate</span>
+          </div>
+        </div>
+      )}
 
       <div className="menu-actions">
         <button className="primary-btn create-btn" onClick={onCreateRoom}>
