@@ -146,7 +146,7 @@ body {
   font-family: 'Outfit', system-ui, -apple-system, sans-serif;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
