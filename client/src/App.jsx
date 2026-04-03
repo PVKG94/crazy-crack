@@ -334,8 +334,8 @@ function App() {
                       </div>
                       <span className="lb-name">{isMe ? `${p.username} (You)` : p.username}</span>
                       <div className="lb-score-bar">
-                        <div className="lb-score-fill" style={{ width: `${Math.min(((p.linesCompleted || 0) / 22) * 100, 100)}%` }}></div>
-                        <span className="lb-score-text">{p.linesCompleted || 0}/22</span>
+                        <div className="lb-score-fill" style={{ width: `${Math.min(((p.linesCompleted || 0) / 10) * 100, 100)}%` }}></div>
+                        <span className="lb-score-text">{p.linesCompleted || 0}/10</span>
                       </div>
                       {p.hasWon && <span className="lb-crown">👑</span>}
                     </div>

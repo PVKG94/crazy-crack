@@ -96,7 +96,7 @@ function takeBotTurn(roomCode, botPlayer) {
     const calledSet = new Set(room.calledNumbers);
     botPlayer.linesCompleted = checkBotLines(botPlayer.board, calledSet);
     
-    if (botPlayer.linesCompleted >= 22 && !botPlayer.hasWon) {
+    if (botPlayer.linesCompleted >= 10 && !botPlayer.hasWon) {
         botPlayer.hasWon = true;
         const wonCount = room.players.filter(p => p.hasWon).length;
         let rank = "1st Place";
@@ -304,7 +304,7 @@ io.on('connection', (socket) => {
         const player = room.players.find(p => p.id === socket.id);
         if (player) {
             player.linesCompleted = linesCompleted;
-            if (linesCompleted >= 22 && !player.hasWon) {
+            if (linesCompleted >= 10 && !player.hasWon) {
                 player.hasWon = true;
 
                 const wonCount = room.players.filter(p => p.hasWon).length;

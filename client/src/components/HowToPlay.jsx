@@ -38,7 +38,7 @@ export default function HowToPlay({ isOpen, onClose }) {
             <span className="htp-num">4</span>
             <div>
               <h4>Win the Game</h4>
-              <p>The first player to complete all 22 lines wins! 🏆 Race to cross out your entire board before anyone else.</p>
+              <p>The first player to complete 10 lines wins! 🏆 This perfectly spells out "CRAZY CRACK" completely on the title board above! Race to get 10 lines before anyone else.</p>
             </div>
           </div>
         </div>
