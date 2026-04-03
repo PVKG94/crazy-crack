@@ -82,6 +82,46 @@
   --cell-active-bg: rgba(34, 197, 94, 0.2);
 }
 
+[data-theme='ocean'] {
+  --bg-color: #0a1628;
+  --text-color: #e0f2fe;
+  --accent-color: #06b6d4;
+  
+  --glow-pop-1: #06b6d4;
+  --glow-pop-2: #22d3ee;
+  
+  --glow-burn-1: #0284c7;
+  --glow-burn-2: #38bdf8;
+
+  --glow-melt-1: #2dd4bf;
+  --glow-melt-2: #5eead4;
+
+  --panel-bg: rgba(6, 182, 212, 0.06);
+  --glass-border: rgba(6, 182, 212, 0.2);
+  --cell-hover-bg: rgba(34, 211, 238, 0.45);
+  --cell-active-bg: rgba(6, 182, 212, 0.25);
+}
+
+[data-theme='sunset'] {
+  --bg-color: #1c0a05;
+  --text-color: #fef3c7;
+  --accent-color: #f59e0b;
+  
+  --glow-pop-1: #f59e0b;
+  --glow-pop-2: #fbbf24;
+  
+  --glow-burn-1: #ef4444;
+  --glow-burn-2: #f87171;
+
+  --glow-melt-1: #d97706;
+  --glow-melt-2: #fcd34d;
+
+  --panel-bg: rgba(245, 158, 11, 0.06);
+  --glass-border: rgba(245, 158, 11, 0.2);
+  --cell-hover-bg: rgba(251, 191, 36, 0.45);
+  --cell-active-bg: rgba(245, 158, 11, 0.25);
+}
+
 * {
   box-sizing: border-box;
   -webkit-touch-callout: none;

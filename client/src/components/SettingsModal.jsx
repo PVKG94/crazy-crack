@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import './SettingsModal.css';
 
 const THEMES = [
-    { id: 'default', name: 'Original Neon' },
-    { id: 'cyberpunk', name: 'Cyberpunk' },
-    { id: 'synthwave', name: 'Synthwave' },
-    { id: 'hacker', name: 'Hacker Grid' }
+    { id: 'default', name: '🔴 Original Neon' },
+    { id: 'cyberpunk', name: '🟡 Cyberpunk' },
+    { id: 'synthwave', name: '🟣 Synthwave' },
+    { id: 'hacker', name: '🟢 Hacker Grid' },
+    { id: 'ocean', name: '🔵 Ocean' },
+    { id: 'sunset', name: '🟠 Sunset' }
 ];
 
 const SettingsModal = ({ isOpen, onClose, currentProfile, onUpdateProfile }) => {
