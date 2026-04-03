@@ -149,7 +149,8 @@ body {
   align-items: center;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   position: relative;
 }
 
