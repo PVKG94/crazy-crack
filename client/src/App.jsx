@@ -80,12 +80,14 @@ function App() {
     function onPlayerWon(data) {
         console.log(`${data.username} took ${data.rank}!`);
         playSoundEffect('win');
-        setWinnerAnnouncement(data);
-        setShowConfetti(true);
-        setTimeout(() => {
-          setWinnerAnnouncement(null);
-          setShowConfetti(false);
-        }, 5000);
+        if (data.rank === "1st Place") {
+            setWinnerAnnouncement(data);
+            setShowConfetti(true);
+            setTimeout(() => {
+              setWinnerAnnouncement(null);
+              setShowConfetti(false);
+            }, 5000);
+        }
     }
 
     function onGameOver(finalPlayers) {

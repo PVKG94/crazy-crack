@@ -102,6 +102,7 @@ function takeBotTurn(roomCode, botPlayer) {
         let rank = "1st Place";
         if (wonCount === 2) rank = "2nd Place";
         else if (wonCount === 3) rank = "3rd Place";
+        botPlayer.rank = rank;
         
         io.to(roomCode).emit('player_won', { username: botPlayer.username, rank });
         if (wonCount >= room.players.length - 1) {
@@ -328,6 +329,8 @@ io.on('connection', (socket) => {
                 else if(wonCount === 3) rank = "3rd Place";
                 else if (wonCount > 3) rank = `${wonCount}th Place`;
 
+                player.rank = rank;
+
                 io.to(roomCode).emit('player_won', { username: player.username, rank });
 
                 if (wonCount >= room.players.length - 1) {
@@ -357,6 +360,7 @@ io.on('connection', (socket) => {
             p.isReady = p.isBot ? true : false;
             p.linesCompleted = 0;
             p.hasWon = false;
+            p.rank = null;
             if (p.isBot) p.board = randomizeBoard();
         });
 

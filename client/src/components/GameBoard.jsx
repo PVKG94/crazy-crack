@@ -209,6 +209,11 @@ export function GameBoard({ socket, roomCode, gameState, players, currentTurnId,
                             ) : (
                                 <div className="strip-avatar text-avatar">{p.avatar || p.username?.charAt(0)}</div>
                             )}
+                            {p.rank && (
+                                <div className={`strip-rank ${p.rank === '1st Place' ? 'first-place' : ''}`}>
+                                    {p.rank === '1st Place' ? '👑' : p.rank.split(' ')[0]}
+                                </div>
+                            )}
                         </div>
                         <span className="strip-name">{p.id === myId ? 'You' : p.username}</span>
                         <span className="strip-lines">{p.id === myId ? lines : (p.linesCompleted || 0)}</span>

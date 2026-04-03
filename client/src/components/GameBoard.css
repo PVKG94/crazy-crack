@@ -340,3 +340,26 @@
 .strike-melt-line {
     box-shadow: 0 0 10px #fff, 0 0 20px var(--glow-melt-2), 0 0 40px var(--glow-melt-1);
 }
+
+.strip-rank {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: var(--bg-color);
+  color: var(--accent-color);
+  font-size: 0.65rem;
+  font-weight: 900;
+  padding: 0.1rem 0.3rem;
+  border-radius: 6px;
+  border: 1px solid var(--accent-color);
+  box-shadow: 0 0 5px var(--accent-color);
+  z-index: 10;
+}
+
+.strip-rank.first-place {
+  font-size: 1rem;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  animation: bounce-crown 1s ease infinite alternate;
+}
