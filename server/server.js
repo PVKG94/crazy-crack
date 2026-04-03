@@ -247,6 +247,21 @@ io.on('connection', (socket) => {
         callback({ success: true, players: safePlayers, state: rooms[roomCode].state });
     });
 
+    socket.on('get_spectator_board', (data, callback) => {
+        const { roomCode, targetId } = data;
+        const room = rooms[roomCode];
+        if (!room) return callback({ success: false });
+
+        const me = room.players.find(p => p.id === socket.id);
+        // Security check: only users who have ALREADY WON can request private boards
+        if (!me || (!me.hasWon && !me.isSpectator)) return callback({ success: false, message: 'Not authorized' });
+
+        const target = room.players.find(p => p.id === targetId);
+        if (!target) return callback({ success: false, message: 'Player not found' });
+
+        callback({ success: true, board: target.board });
+    });
+
     socket.on('start_game_request', (roomCode) => {
         const room = rooms[roomCode];
         if (room && room.players[0].id === socket.id) {

@@ -12,6 +12,9 @@ export function GameBoard({ socket, roomCode, gameState, players, currentTurnId,
   const [completedLinesArr, setCompletedLinesArr] = useState([]);
   const [lastCalledNumber, setLastCalledNumber] = useState(null);
 
+  const [spectatedPlayerId, setSpectatedPlayerId] = useState(null);
+  const [spectatedBoard, setSpectatedBoard] = useState(null);
+
   useEffect(() => {
     socket.on('number_called', (data) => {
       playSoundEffect(profile?.animStyle || 'pop');
@@ -29,6 +32,27 @@ export function GameBoard({ socket, roomCode, gameState, players, currentTurnId,
       socket.off('number_called');
     };
   }, [socket, profile]);
+
+  // Auto-select a spectatable player if we win
+  useEffect(() => {
+      const me = players.find(p => p.id === myId);
+      if (me?.hasWon && !spectatedPlayerId && gameState === 'playing') {
+          const remaining = players.filter(p => !p.hasWon && p.id !== myId);
+          if (remaining.length > 0) setSpectatedPlayerId(remaining[0].id);
+      }
+  }, [players, myId, spectatedPlayerId, gameState]);
+
+  // Fetch spectated board when selected
+  useEffect(() => {
+      const me = players.find(p => p.id === myId);
+      if (gameState === 'playing' && me?.hasWon && spectatedPlayerId) {
+          socket.emit('get_spectator_board', { roomCode, targetId: spectatedPlayerId }, (res) => {
+              if (res.success) {
+                  setSpectatedBoard(res.board);
+              }
+          });
+      }
+  }, [spectatedPlayerId, gameState, players, myId, roomCode, socket]);
 
   // Check lines whenever calledNumbers or board changes
   useEffect(() => {
@@ -90,6 +114,8 @@ export function GameBoard({ socket, roomCode, gameState, players, currentTurnId,
   const handleCellClick = (number) => {
     if (gameState !== 'playing') return;
     if (isSpectator) return;
+    const me = players.find(p => p.id === myId);
+    if (me?.hasWon) return; // Winners cannot play
     if (currentTurnId !== myId) return; // Not my turn
     if (calledNumbers.has(number)) return; // Already called
     
@@ -136,11 +162,39 @@ export function GameBoard({ socket, roomCode, gameState, players, currentTurnId,
   // Playing Phase Render
   const isMyTurn = !isSpectator && currentTurnId === myId;
   const currentTurnPlayer = players.find(p => p.id === currentTurnId);
+  const me = players.find(p => p.id === myId);
+  
+  const isWinnerSpectating = me?.hasWon && spectatedBoard;
+  const renderBoard = isWinnerSpectating ? spectatedBoard : board;
+
+  const getCompletedLines = (targetBoard) => {
+       if (!targetBoard || targetBoard.includes(null)) return [];
+       const strikes = [];
+       for (let i = 0; i < 10; i++) {
+          let r = true, c = true;
+          for (let j=0; j<10; j++) {
+              if (!calledNumbers.has(targetBoard[i*10+j])) r = false;
+              if (!calledNumbers.has(targetBoard[j*10+i])) c = false;
+          }
+          if (r) strikes.push(`row-${i}`);
+          if (c) strikes.push(`col-${i}`);
+       }
+       let d1 = true, d2 = true;
+       for (let i=0; i<10; i++) {
+          if (!calledNumbers.has(targetBoard[i*10+i])) d1 = false;
+          if (!calledNumbers.has(targetBoard[i*10+(9-i)])) d2 = false;
+       }
+       if (d1) strikes.push('diag-1');
+       if (d2) strikes.push('diag-2');
+       return strikes;
+  };
+
+  const currentCompletedLines = isWinnerSpectating ? getCompletedLines(spectatedBoard) : completedLinesArr;
 
   return (
     <div className="game-container">
         <button className="back-btn" onClick={onLeave}>← Back</button>
-        <TitleScore linesCompleted={lines} />
+        <TitleScore linesCompleted={isWinnerSpectating ? currentCompletedLines.length : lines} />
 
         {/* Player Profiles Strip */}
         <div className="players-strip">
@@ -164,21 +218,39 @@ export function GameBoard({ socket, roomCode, gameState, players, currentTurnId,
         </div>
         
         <div className="game-header">
-            <h2 className={isMyTurn ? 'my-turn glow' : ''}>
-                {isSpectator
-                  ? `👁️ Spectating — ${currentTurnPlayer?.username || '...'}'s turn`
-                  : isMyTurn ? "IT'S YOUR TURN!" : "Waiting for turn..."}
-            </h2>
+            {me?.hasWon ? (
+                <div className="spectator-controls">
+                    <h3 style={{margin: '0 0 0.5rem 0', color: '#ccc'}}>👁️ Spectating Active Players</h3>
+                    <div style={{display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap'}}>
+                         {players.filter(p => !p.hasWon && p.id !== myId).map(p => (
+                             <button 
+                                key={p.id}
+                                className={`secondary-btn ${spectatedPlayerId === p.id ? 'glow' : ''}`}
+                                style={{padding: '0.4rem 1rem', fontSize: '0.9rem', borderColor: spectatedPlayerId === p.id ? 'var(--accent-color)' : ''}}
+                                onClick={() => setSpectatedPlayerId(p.id)}
+                             >
+                                {p.username}
+                             </button>
+                         ))}
+                    </div>
+                </div>
+            ) : (
+                <h2 className={isMyTurn ? 'my-turn glow' : ''}>
+                    {isSpectator
+                      ? `👁️ Spectating — ${currentTurnPlayer?.username || '...'}'s turn`
+                      : isMyTurn ? "IT'S YOUR TURN!" : "Waiting for turn..."}
+                </h2>
+            )}
         </div>
 
-        <div className={`grid-board playing ${isMyTurn ? 'active-turn' : ''}`}>
+        <div className={`grid-board playing ${isMyTurn ? 'active-turn' : ''} ${isWinnerSpectating ? 'spectating-mode' : ''}`}>
              
              {/* Render Full Line Strikes */}
-             {completedLinesArr.map(lineClass => (
+             {currentCompletedLines.map(lineClass => (
                  <div key={lineClass} className={`board-strike-line ${lineClass} strike-${profile?.animStyle || 'pop'}-line`}></div>
              ))}
 
-             {board.map((num, i) => {
+             {renderBoard.map((num, i) => {
                  const isCalled = calledNumbers.has(num);
                  const isFlashing = num === lastCalledNumber;
                  return (
