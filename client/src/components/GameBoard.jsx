@@ -202,19 +202,19 @@ export function GameBoard({ socket, roomCode, gameState, players, currentTurnId,
                 const isImg = p.avatar && (p.avatar.startsWith('data:') || p.avatar.startsWith('http'));
                 const isCurrentTurn = currentTurnId === p.id;
                 return (
-                    <div key={p.id} className={`strip-player ${isCurrentTurn ? 'current-turn' : ''}`}>
+                    <div key={p.id} className={`strip-player ${isCurrentTurn ? 'current-turn' : ''}`} style={{ position: 'relative' }}>
                         <div className="strip-avatar-wrap">
                             {isImg ? (
                                 <img src={p.avatar} alt={p.username} className="strip-avatar" />
                             ) : (
                                 <div className="strip-avatar text-avatar">{p.avatar || p.username?.charAt(0)}</div>
                             )}
-                            {p.rank && (
-                                <div className={`strip-rank ${p.rank === '1st Place' ? 'first-place' : ''}`}>
-                                    {p.rank === '1st Place' ? '👑' : p.rank.split(' ')[0]}
-                                </div>
-                            )}
                         </div>
+                        {p.rank && (
+                            <div className={`strip-rank ${p.rank === '1st Place' ? 'first-place' : ''}`}>
+                                {p.rank === '1st Place' ? '👑' : p.rank.split(' ')[0]}
+                            </div>
+                        )}
                         <span className="strip-name">{p.id === myId ? 'You' : p.username}</span>
                         <span className="strip-lines">{p.id === myId ? lines : (p.linesCompleted || 0)}</span>
                     </div>
