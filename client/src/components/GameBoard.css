@@ -343,23 +343,49 @@
 
 .strip-rank {
   position: absolute;
-  top: -5px;
-  right: -5px;
-  background: var(--bg-color);
-  color: var(--accent-color);
-  font-size: 0.65rem;
+  top: -8px;
+  right: -8px;
+  background: linear-gradient(135deg, var(--glow-pop-1, #f43f5e), var(--glow-pop-2, #ec4899));
+  color: #fff;
+  font-size: 0.6rem;
   font-weight: 900;
-  padding: 0.1rem 0.3rem;
-  border-radius: 6px;
-  border: 1px solid var(--accent-color);
-  box-shadow: 0 0 5px var(--accent-color);
+  padding: 0.2rem 0.4rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 10px var(--glow-pop-1, rgba(244,63,94,0.6)), inset 0 1px 3px rgba(255, 255, 255, 0.5);
   z-index: 10;
+  transform-origin: center;
+  animation: badge-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, badge-pulse 2.5s infinite alternate 0.6s;
+}
+
+@keyframes badge-pop {
+  0% { transform: scale(0) rotate(-15deg); opacity: 0; }
+  100% { transform: scale(1) rotate(5deg); opacity: 1; }
+}
+
+@keyframes badge-pulse {
+  0% { transform: scale(1) rotate(5deg); filter: brightness(1); }
+  100% { transform: scale(1.15) rotate(0deg); filter: brightness(1.3); }
 }
 
 .strip-rank.first-place {
-  font-size: 1rem;
+  font-size: 1.4rem;
   background: transparent;
   border: none;
   box-shadow: none;
-  animation: bounce-crown 1s ease infinite alternate;
+  animation: crown-drop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, board-bounce-crown 1.5s ease-in-out infinite alternate 0.8s;
+  top: -15px;
+  right: -10px;
+  text-shadow: 0 0 10px #eab308, 0 0 20px #eab308, 0 0 40px #eab308;
+}
+
+@keyframes crown-drop {
+  0% { transform: translateY(-30px) scale(0) rotate(30deg); opacity: 0; filter: brightness(2); }
+  60% { transform: translateY(5px) scale(1.3) rotate(-15deg); opacity: 1; }
+  100% { transform: translateY(0) scale(1) rotate(15deg); opacity: 1; filter: brightness(1); }
+}
+
+@keyframes board-bounce-crown {
+  0% { transform: translateY(0) scale(1) rotate(15deg); filter: brightness(1); }
+  100% { transform: translateY(-8px) scale(1.15) rotate(-10deg); filter: brightness(1.4); }
 }
