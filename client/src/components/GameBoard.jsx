@@ -107,7 +107,7 @@ export function GameBoard({ socket, roomCode, gameState, players, currentTurnId,
 
   const handleReady = () => {
     if (!board.includes(null)) {
-        socket.emit('board_ready', roomCode);
+        socket.emit('board_ready', { roomCode, board });
     }
   };
 

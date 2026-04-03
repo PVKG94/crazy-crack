@@ -271,20 +271,22 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('board_ready', (roomCode) => {
-        const room = rooms[roomCode];
+    socket.on('board_ready', (data) => {
+        const roomCodeTarget = typeof data === 'string' ? data : data.roomCode;
+        const room = rooms[roomCodeTarget];
         if (!room) return;
 
         const player = room.players.find(p => p.id === socket.id);
         if (player) {
             player.isReady = true;
-            io.to(roomCode).emit('player_ready_update', room.players.map(p => ({...p, board: undefined})));
+            if (data.board) player.board = data.board;
+            io.to(roomCodeTarget).emit('player_ready_update', room.players.map(p => ({...p, board: undefined})));
 
             const allReady = room.players.every(p => p.isReady);
             if (allReady) {
                 room.state = 'playing';
                 room.turnIndex = 0;
-                io.to(roomCode).emit('all_players_ready', { 
+                io.to(roomCodeTarget).emit('all_players_ready', { 
                     players: room.players.map(p => ({...p, board: undefined})),
                     currentTurnId: room.players[room.turnIndex].id 
                 });
