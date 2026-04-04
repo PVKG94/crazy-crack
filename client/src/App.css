@@ -1,31 +1,4 @@
-/* Append to existing or replace depending on what App.css had */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap');
-
-:root {
-  --bg-color: #0f172a; /* Slate 900 */
-  --accent-color: #f43f5e; /* Rose 500 */
-  --glass-bg: rgba(30, 41, 59, 0.7); /* Slate 800 */
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --shadow-lg: 0 10px 30px -10px rgba(0,0,0,0.5);
-}
-
-body {
-  margin: 0;
-  padding: 0;
-  background-color: var(--bg-color);
-  color: white;
-  font-family: 'Outfit', sans-serif;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  overflow-x: hidden;
-}
-
-#root {
-  width: 100%;
-  max-width: 800px;
-  padding: 2rem 1rem;
-}
+/* App-level styles — no duplicate @import (font loaded in index.css) */
 
 .app-container {
   display: flex;
@@ -42,7 +15,8 @@ h1 {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.3));
+  /* text-shadow is cheaper than filter: drop-shadow on mobile */
+  text-shadow: none;
 }
 
 .status {
@@ -57,6 +31,9 @@ h1 {
   cursor: pointer;
   border: none;
   font-weight: bold;
+  /* GPU-accelerated transitions only */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 /* Winner Overlay */
@@ -69,19 +46,21 @@ h1 {
   align-items: center;
   z-index: 9999;
   animation: explode-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  will-change: transform, opacity;
 }
 
 .winner-content {
   text-align: center;
   transform: scale(1);
   animation: heartbeat 1.5s infinite;
+  will-change: transform;
 }
 
 .winner-rank {
   font-size: 6rem;
   font-weight: 900;
   margin: 0;
-  color: #fef08a; /* Yellow */
+  color: #fef08a;
   text-shadow: 0 0 40px #eab308, 0 0 100px #ca8a04;
   -webkit-text-fill-color: #fef08a;
 }
@@ -101,19 +80,20 @@ h1 {
 
 @keyframes heartbeat {
   0% { transform: scale(1); }
-  50% { transform: scale(1.05); text-shadow: 0 0 60px #eab308; }
+  50% { transform: scale(1.05); }
   100% { transform: scale(1); }
 }
 
 /* Finished Screen */
 .finished-screen {
-  background: var(--glass-bg);
+  background: rgba(30, 41, 59, 0.85);
   padding: 2rem;
   border-radius: 20px;
   border: 1px solid var(--glass-border);
   box-shadow: var(--shadow-lg);
   width: 100%;
   animation: slide-up 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  will-change: transform, opacity;
 }
 
 @keyframes slide-up {
@@ -145,7 +125,7 @@ h1 {
   background: rgba(255, 255, 255, 0.04);
   border-radius: 12px;
   border: 1px solid transparent;
-  transition: all 0.3s ease;
+  transition: background 0.3s ease, border-color 0.3s ease;
   animation: row-fade-in 0.4s ease both;
 }
 
@@ -244,6 +224,7 @@ h1 {
 .lb-crown {
   font-size: 1.2rem;
   animation: bounce-crown 1s ease infinite alternate;
+  will-change: transform;
 }
 
 @keyframes bounce-crown {
@@ -271,7 +252,7 @@ h1 {
 }
 
 
-/* Settings Gear Button */
+/* Settings Gear Button — opaque bg instead of backdrop-filter */
 .settings-gear-btn {
   position: fixed;
   top: 16px;
@@ -280,16 +261,17 @@ h1 {
   height: 44px;
   border-radius: 50%;
   border: 1px solid var(--glass-border);
-  background: rgba(30, 41, 59, 0.8);
-  backdrop-filter: blur(8px);
+  background: rgba(15, 23, 42, 0.95);
   font-size: 1.3rem;
   cursor: pointer;
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 .settings-gear-btn:hover {
@@ -298,7 +280,7 @@ h1 {
   box-shadow: 0 0 15px var(--accent-color);
 }
 
-/* Help Button */
+/* Help Button — opaque bg instead of backdrop-filter */
 .help-btn {
   position: fixed;
   top: 68px;
@@ -307,8 +289,7 @@ h1 {
   height: 36px;
   border-radius: 50%;
   border: 1px solid var(--glass-border);
-  background: rgba(30, 41, 59, 0.8);
-  backdrop-filter: blur(8px);
+  background: rgba(15, 23, 42, 0.95);
   font-size: 1rem;
   font-weight: 900;
   font-family: 'Outfit', sans-serif;
@@ -318,8 +299,10 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 .help-btn:hover {
@@ -341,7 +324,7 @@ h1 {
   font-weight: 600;
   font-size: 0.85rem;
   margin-bottom: 1rem;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .back-btn:hover {

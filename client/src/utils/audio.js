@@ -1,9 +1,25 @@
+// Singleton AudioContext — reused across all sound effects
+// Creating a new AudioContext per sound causes GC pressure and audio latency on mobile
+let sharedCtx = null;
+
+function getAudioContext() {
+  if (!sharedCtx) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return null;
+    sharedCtx = new AudioContextClass();
+  }
+  // Mobile browsers suspend AudioContext until user interaction — resume it
+  if (sharedCtx.state === 'suspended') {
+    sharedCtx.resume();
+  }
+  return sharedCtx;
+}
+
 export function playSoundEffect(type = 'pop') {
   try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
     
-    const ctx = new AudioContext();
     const osc = ctx.createOscillator();
     const gainNode = ctx.createGain();
     

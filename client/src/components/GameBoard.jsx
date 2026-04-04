@@ -1,7 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import './GameBoard.css';
 import TitleScore from './TitleScore';
 import { playSoundEffect } from '../utils/audio';
+
+// Memoized grid cell — prevents 100 cells re-rendering on every state change
+const GridCell = memo(function GridCell({ num, isCalled, isClickable, isFlashing, onClick }) {
+  const animStyle = localStorage.getItem('crazy_crack_anim') || 'pop';
+  return (
+    <div 
+      className={`grid-cell ${isCalled ? 'called' : ''} ${isClickable ? 'clickable' : ''} ${isFlashing ? 'just-called' : ''}`}
+      onClick={onClick}
+    >
+      {num}
+      {isCalled && <div className={`strike-cross strike-${animStyle}`}></div>}
+    </div>
+  );
+});
 
 export function GameBoard({ socket, roomCode, gameState, players, currentTurnId, myId, profile, onLeave, isSpectator, spectatorCalledNumbers }) {
   const [board, setBoard] = useState(Array(100).fill(null));
@@ -96,31 +110,32 @@ export function GameBoard({ socket, roomCode, gameState, players, currentTurnId,
     }
   }, [board, calledNumbers, lines, completedLinesArr.length, roomCode, socket]);
 
-  const handleRandomize = () => {
+  const handleRandomize = useCallback(() => {
     const nums = Array.from({length: 100}, (_, i) => i + 1);
     for (let i = nums.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [nums[i], nums[j]] = [nums[j], nums[i]];
     }
     setBoard(nums);
-  };
+  }, []);
 
-  const handleReady = () => {
+  const handleReady = useCallback(() => {
     if (!board.includes(null)) {
         socket.emit('board_ready', { roomCode, board });
     }
-  };
+  }, [board, roomCode, socket]);
 
-  const handleCellClick = (number) => {
+  // Memoized click handler — stable reference for cell memoization
+  const handleCellClick = useCallback((number) => {
     if (gameState !== 'playing') return;
     if (isSpectator) return;
     const me = players.find(p => p.id === myId);
-    if (me?.hasWon) return; // Winners cannot play
-    if (currentTurnId !== myId) return; // Not my turn
-    if (calledNumbers.has(number)) return; // Already called
+    if (me?.hasWon) return;
+    if (currentTurnId !== myId) return;
+    if (calledNumbers.has(number)) return;
     
     socket.emit('call_number', { roomCode, number });
-  };
+  }, [gameState, isSpectator, players, myId, currentTurnId, calledNumbers, roomCode, socket]);
 
   // Spectators skip setup
   if (isSpectator && gameState === 'setup') {
@@ -255,20 +270,16 @@ export function GameBoard({ socket, roomCode, gameState, players, currentTurnId,
                  <div key={lineClass} className={`board-strike-line ${lineClass} strike-${profile?.animStyle || 'pop'}-line`}></div>
              ))}
 
-             {renderBoard.map((num, i) => {
-                 const isCalled = calledNumbers.has(num);
-                 const isFlashing = num === lastCalledNumber;
-                 return (
-                     <div 
-                         key={i} 
-                         className={`grid-cell ${isCalled ? 'called' : ''} ${isMyTurn && !isCalled ? 'clickable' : ''} ${isFlashing ? 'just-called' : ''}`}
-                         onClick={() => handleCellClick(num)}
-                     >
-                         {num}
-                         {isCalled && <div className={`strike-cross strike-${profile?.animStyle || 'pop'}`}></div>}
-                     </div>
-                 )
-             })}
+             {renderBoard.map((num, i) => (
+                 <GridCell
+                     key={i}
+                     num={num}
+                     isCalled={calledNumbers.has(num)}
+                     isClickable={isMyTurn && !calledNumbers.has(num)}
+                     isFlashing={num === lastCalledNumber}
+                     onClick={() => handleCellClick(num)}
+                 />
+             ))}
         </div>
     </div>
   );

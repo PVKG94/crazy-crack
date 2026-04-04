@@ -32,6 +32,10 @@
   aspect-ratio: 1;
   position: relative;
   overflow: hidden;
+  /* Isolate repaints to the grid — prevents whole-page repaint */
+  contain: layout style;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 .grid-cell {
@@ -44,9 +48,13 @@
   border-radius: 6px;
   user-select: none;
   position: relative;
-  transition: all 0.2s;
+  /* Only transition specific properties — NOT 'all' */
+  transition: transform 0.15s ease, background-color 0.15s ease;
   color: white;
   aspect-ratio: 1;
+  /* GPU layer promotion for smoother animations */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 /* On mobile */
@@ -74,6 +82,7 @@
   cursor: pointer;
   background: var(--cell-active-bg);
   border: 1px solid var(--accent-color);
+  will-change: transform;
 }
 
 .grid-cell.just-called {
@@ -82,15 +91,15 @@
 }
 
 @keyframes cell-flash {
-  0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.8); transform: scale(1); }
-  15% { box-shadow: 0 0 20px 6px rgba(251, 191, 36, 0.7); transform: scale(1.15); background: rgba(251, 191, 36, 0.4); }
-  40% { box-shadow: 0 0 12px 3px rgba(251, 191, 36, 0.4); transform: scale(1.05); }
-  100% { box-shadow: 0 0 0 0 transparent; transform: scale(1); }
+  0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.8); transform: translateZ(0) scale(1); }
+  15% { box-shadow: 0 0 15px 4px rgba(251, 191, 36, 0.6); transform: translateZ(0) scale(1.15); background: rgba(251, 191, 36, 0.4); }
+  40% { box-shadow: 0 0 8px 2px rgba(251, 191, 36, 0.3); transform: translateZ(0) scale(1.05); }
+  100% { box-shadow: 0 0 0 0 transparent; transform: translateZ(0) scale(1); }
 }
 
 .grid-cell.clickable:hover {
   background: var(--cell-hover-bg);
-  transform: scale(1.1);
+  transform: translateZ(0) scale(1.1);
   z-index: 10;
 }
 
@@ -113,7 +122,7 @@
 /* POP */
 .strike-pop {
   background: var(--glow-pop-1);
-  box-shadow: 0 0 15px var(--glow-pop-1);
+  box-shadow: 0 0 10px var(--glow-pop-1);
   animation: strike-pop-anim 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 @keyframes strike-pop-anim {
@@ -124,7 +133,7 @@
 /* BURN */
 .strike-burn {
   background: var(--glow-burn-1);
-  box-shadow: 0 0 20px var(--glow-burn-1), 0 0 10px var(--glow-burn-2);
+  box-shadow: 0 0 12px var(--glow-burn-1);
   animation: strike-burn-anim 0.5s ease-in;
 }
 @keyframes strike-burn-anim {
@@ -136,7 +145,7 @@
 /* MELT */
 .strike-melt {
   background: var(--glow-melt-1);
-  box-shadow: 0 5px 15px var(--glow-melt-2), 0 10px 5px var(--cell-active-bg);
+  box-shadow: 0 0 10px var(--glow-melt-2);
   animation: strike-melt-anim 0.6s ease-out;
 }
 @keyframes strike-melt-anim {
@@ -161,7 +170,8 @@
   align-items: center;
   gap: 0.3rem;
   opacity: 0.6;
-  transition: all 0.3s ease;
+  /* Specific transitions — not 'all' */
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .strip-player.current-turn {
@@ -175,7 +185,7 @@
   border-radius: 50%;
   border: 2px solid var(--glass-border);
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
   position: relative;
 }
 
@@ -231,12 +241,13 @@
 }
 
 .my-turn {
-  color: #34d399; /* Emerald 400 */
+  color: #34d399;
 }
 
 .glow {
   text-shadow: 0 0 15px rgba(52, 211, 153, 0.6);
   animation: pulse 2s infinite;
+  will-change: opacity;
 }
 
 .lines-score {
@@ -254,6 +265,7 @@
     border-radius: 4px;
     pointer-events: none;
     background: #fff;
+    will-change: transform, opacity;
 }
 
 /* Horizontal Rows */
@@ -265,8 +277,8 @@
     animation: draw-row 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 @keyframes draw-row {
-    0% { transform: scaleX(0); opacity: 0; filter: brightness(2); }
-    100% { transform: scaleX(1); opacity: 0.95; filter: brightness(1); }
+    0% { transform: scaleX(0); opacity: 0; }
+    100% { transform: scaleX(1); opacity: 0.95; }
 }
 .row-0 { top: calc(5% - 2px); }
 .row-1 { top: calc(15% - 2px); }
@@ -288,8 +300,8 @@
     animation: draw-col 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 @keyframes draw-col {
-    0% { transform: scaleY(0); opacity: 0; filter: brightness(2); }
-    100% { transform: scaleY(1); opacity: 0.95; filter: brightness(1); }
+    0% { transform: scaleY(0); opacity: 0; }
+    100% { transform: scaleY(1); opacity: 0.95; }
 }
 
 .col-0 { left: calc(5% - 2px); }
@@ -315,8 +327,8 @@
     animation: draw-diag-1 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 @keyframes draw-diag-1 {
-    0% { transform: rotate(45deg) scaleX(0); opacity: 0; filter: brightness(2); }
-    100% { transform: rotate(45deg) scaleX(1); opacity: 0.95; filter: brightness(1); }
+    0% { transform: rotate(45deg) scaleX(0); opacity: 0; }
+    100% { transform: rotate(45deg) scaleX(1); opacity: 0.95; }
 }
 
 .diag-2 {
@@ -326,19 +338,19 @@
     animation: draw-diag-2 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 @keyframes draw-diag-2 {
-    0% { transform: rotate(-45deg) scaleX(0); opacity: 0; filter: brightness(2); }
-    100% { transform: rotate(-45deg) scaleX(1); opacity: 0.95; filter: brightness(1); }
+    0% { transform: rotate(-45deg) scaleX(0); opacity: 0; }
+    100% { transform: rotate(-45deg) scaleX(1); opacity: 0.95; }
 }
 
-/* Specific Style Overrides (Matching the cell strike animations) */
+/* Specific Style Overrides — simplified box-shadows (single instead of triple) */
 .strike-pop-line {
-    box-shadow: 0 0 10px #fff, 0 0 20px var(--glow-pop-1), 0 0 40px var(--glow-pop-1);
+    box-shadow: 0 0 15px var(--glow-pop-1);
 }
 .strike-burn-line {
-    box-shadow: 0 0 10px #fff, 0 0 20px var(--glow-burn-1), 0 0 40px var(--glow-burn-2);
+    box-shadow: 0 0 15px var(--glow-burn-1);
 }
 .strike-melt-line {
-    box-shadow: 0 0 10px #fff, 0 0 20px var(--glow-melt-2), 0 0 40px var(--glow-melt-1);
+    box-shadow: 0 0 15px var(--glow-melt-2);
 }
 
 .strip-rank {
@@ -352,10 +364,11 @@
   padding: 0.2rem 0.4rem;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 4px 10px var(--glow-pop-1, rgba(244,63,94,0.6)), inset 0 1px 3px rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 10px var(--glow-pop-1, rgba(244,63,94,0.6));
   z-index: 10;
   transform-origin: center;
   animation: badge-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, badge-pulse 2.5s infinite alternate 0.6s;
+  will-change: transform;
 }
 
 @keyframes badge-pop {
@@ -364,8 +377,8 @@
 }
 
 @keyframes badge-pulse {
-  0% { transform: scale(1) rotate(5deg); filter: brightness(1); }
-  100% { transform: scale(1.15) rotate(0deg); filter: brightness(1.3); }
+  0% { transform: scale(1) rotate(5deg); }
+  100% { transform: scale(1.15) rotate(0deg); }
 }
 
 .strip-rank.first-place {
@@ -376,16 +389,16 @@
   animation: crown-drop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, board-bounce-crown 1.5s ease-in-out infinite alternate 0.8s;
   top: -15px;
   right: -10px;
-  text-shadow: 0 0 10px #eab308, 0 0 20px #eab308, 0 0 40px #eab308;
+  text-shadow: 0 0 10px #eab308, 0 0 20px #eab308;
 }
 
 @keyframes crown-drop {
-  0% { transform: translateY(-30px) scale(0) rotate(30deg); opacity: 0; filter: brightness(2); }
+  0% { transform: translateY(-30px) scale(0) rotate(30deg); opacity: 0; }
   60% { transform: translateY(5px) scale(1.3) rotate(-15deg); opacity: 1; }
-  100% { transform: translateY(0) scale(1) rotate(15deg); opacity: 1; filter: brightness(1); }
+  100% { transform: translateY(0) scale(1) rotate(15deg); opacity: 1; }
 }
 
 @keyframes board-bounce-crown {
-  0% { transform: translateY(0) scale(1) rotate(15deg); filter: brightness(1); }
-  100% { transform: translateY(-8px) scale(1.15) rotate(-10deg); filter: brightness(1.4); }
+  0% { transform: translateY(0) scale(1) rotate(15deg); }
+  100% { transform: translateY(-8px) scale(1.15) rotate(-10deg); }
 }

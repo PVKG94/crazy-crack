@@ -15,7 +15,9 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: transform 0.2s;
+  transition: transform 0.2s ease;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 .chat-toggle-btn:hover {
@@ -45,24 +47,28 @@
   50% { transform: translateY(-10px); }
 }
 
+/* Use transform instead of 'right' — transform is GPU-composited, right triggers layout */
 .chat-sidebar {
   position: fixed;
   top: 0;
-  right: -350px;
+  right: 0;
   width: 320px;
   height: 100vh;
+  /* Opaque bg instead of backdrop-filter: blur() */
   background: var(--bg-color);
-  backdrop-filter: blur(10px);
   border-left: 1px solid var(--glass-border);
   box-shadow: -10px 0 30px rgba(0,0,0,0.5);
   display: flex;
   flex-direction: column;
-  transition: right 0.3s ease-in-out;
+  /* GPU-accelerated transition via transform instead of right */
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
   z-index: 1001;
+  will-change: transform;
 }
 
 .chat-sidebar.open {
-  right: 0;
+  transform: translateX(0);
 }
 
 .chat-header {
@@ -192,7 +198,7 @@
   padding: 0 0.75rem;
   max-height: 0;
   overflow: hidden;
-  transition: all 0.2s ease;
+  transition: max-height 0.2s ease, padding 0.2s ease;
 }
 
 .emoji-tray.show {
@@ -208,7 +214,7 @@
   padding: 0.3rem 0.45rem;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: transform 0.15s ease, background 0.15s ease;
 }
 
 .emoji-btn:hover {
@@ -230,7 +236,7 @@
   padding: 0.4rem 0.6rem;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: transform 0.15s ease, background 0.15s ease;
 }
 
 .emoji-toggle:hover {
@@ -273,6 +279,5 @@
 @media (max-width: 500px) {
   .chat-sidebar {
       width: 100vw;
-      right: -100vw;
   }
 }
