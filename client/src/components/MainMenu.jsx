@@ -12,6 +12,7 @@ function loadStats() {
 export default function MainMenu({ profile, onCreateRoom, onJoinRoom, onPlayBot, onBack }) {
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [roomCode, setRoomCode] = useState('');
+  const [botDifficulty, setBotDifficulty] = useState('medium');
   const stats = loadStats();
 
   const handleJoinSubmit = () => {
@@ -89,9 +90,22 @@ export default function MainMenu({ profile, onCreateRoom, onJoinRoom, onPlayBot,
         
         <div className="divider"><span>OR</span></div>
         
-        <button className="secondary-btn bot-btn" onClick={onPlayBot}>
-          🤖 Play vs Computer
-        </button>
+        <div className="bot-play-container">
+          <button className="secondary-btn bot-btn" onClick={() => onPlayBot(botDifficulty)}>
+            🤖 Play vs Computer
+          </button>
+          <select 
+            className="difficulty-select"
+            value={botDifficulty}
+            onChange={(e) => setBotDifficulty(e.target.value)}
+          >
+            <option value="beginner">Beginner</option>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+            <option value="extreme">Extreme</option>
+          </select>
+        </div>
       </div>
     </div>
   );

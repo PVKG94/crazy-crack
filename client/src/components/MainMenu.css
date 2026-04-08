@@ -158,3 +158,26 @@
   cursor: pointer;
   padding: 0 0.5rem;
 }
+
+.bot-play-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.difficulty-select {
+  padding: 0.5rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  color: white;
+  font-family: inherit;
+  font-size: 0.9rem;
+  outline: none;
+  cursor: pointer;
+}
+.difficulty-select option {
+  background: var(--bg-color);
+  color: white;
+}

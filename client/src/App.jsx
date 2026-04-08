@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { io } from 'socket.io-client'
+import { LocalGameEngine } from './services/LocalGameEngine'
 import './App.css'
 import ProfileSetup from './components/ProfileSetup'
 import MainMenu from './components/MainMenu'
@@ -15,7 +16,7 @@ import HowToPlay from './components/HowToPlay'
 // Initialize single socket connection
 // In production (same-origin), use '' so socket.io connects to the serving host
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || ''
-const socket = io(SERVER_URL)
+const networkSocket = io(SERVER_URL)
 
 // Stats helpers
 function loadStats() {
@@ -30,7 +31,8 @@ function saveStats(stats) {
 }
 
 function App() {
-  const [isConnected, setIsConnected] = useState(socket.connected);
+  const [socket, setSocket] = useState(networkSocket);
+  const [isConnected, setIsConnected] = useState(networkSocket.connected);
   const [profile, setProfile] = useState(null);
   
   // Game session states
@@ -174,7 +176,7 @@ function App() {
       socket.off('rematch_started', onRematchStarted);
       socket.off('kicked_from_room', onKickedFromRoom);
     };
-  }, []);
+  }, [socket]);
 
   // Track host status
   useEffect(() => {
@@ -243,8 +245,11 @@ function App() {
     });
   };
 
-  const handlePlayBot = () => {
-    socket.emit('create_single_player', profile, (response) => {
+  const handlePlayBot = (difficulty) => {
+    const localSocket = new LocalGameEngine(difficulty);
+    setSocket(localSocket);
+    
+    localSocket.emit('create_single_player', profile, (response) => {
        if (response.success) {
          setRoom(response.roomCode);
          setGameState('waiting');
@@ -260,7 +265,10 @@ function App() {
       setIsSpectator(false);
       setSpectatorCalledNumbers([]);
       socket.disconnect(); // force disconnect
-      socket.connect();    // reconnect clean
+      if (socket !== networkSocket) {
+        setSocket(networkSocket);
+      }
+      networkSocket.connect();    // reconnect clean
   };
 
   const handleRematch = () => {
