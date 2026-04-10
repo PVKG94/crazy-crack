@@ -186,9 +186,14 @@ io.on('connection', (socket) => {
         
         if (!room) return callback({ success: false, message: 'Room not found.' });
 
-        // Check if this is a reconnecting player (same username, disconnected)
-        const existingPlayer = room.players.find(p => p.username === profile.username && p.disconnected);
+        // Check if this is a reconnecting player (same username)
+        const existingPlayer = room.players.find(p => p.username === profile.username);
         if (existingPlayer) {
+            const oldSocket = io.sockets.sockets.get(existingPlayer.id);
+            if (oldSocket && oldSocket.id !== socket.id) {
+                oldSocket.leave(roomCode);
+                oldSocket.disconnect(true);
+            }
             existingPlayer.id = socket.id;
             existingPlayer.disconnected = false;
             existingPlayer.avatar = profile.avatar;
