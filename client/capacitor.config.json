@@ -2,10 +2,6 @@
   "appId": "com.crazycrack.app",
   "appName": "CRAZY CRACK",
   "webDir": "dist",
-  "server": {
-    "url": "https://crazy-crack.onrender.com",
-    "cleartext": true
-  },
   "android": {
     "backgroundColor": "#0f172a",
     "allowMixedContent": true

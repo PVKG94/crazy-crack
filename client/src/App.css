@@ -5,6 +5,7 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 30px);
 }
 
 h1 {
@@ -255,7 +256,7 @@ h1 {
 /* Settings Gear Button — opaque bg instead of backdrop-filter */
 .settings-gear-btn {
   position: fixed;
-  top: 16px;
+  top: calc(env(safe-area-inset-top, 0px) + 20px);
   right: 16px;
   width: 44px;
   height: 44px;
@@ -283,7 +284,7 @@ h1 {
 /* Help Button — opaque bg instead of backdrop-filter */
 .help-btn {
   position: fixed;
-  top: 68px;
+  top: calc(env(safe-area-inset-top, 0px) + 72px);
   right: 16px;
   width: 36px;
   height: 36px;
