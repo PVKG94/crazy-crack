@@ -94,17 +94,17 @@ export default function MainMenu({ profile, onCreateRoom, onJoinRoom, onPlayBot,
           <button className="secondary-btn bot-btn" onClick={() => onPlayBot(botDifficulty)}>
             🤖 Play vs Computer
           </button>
-          <select 
-            className="difficulty-select"
-            value={botDifficulty}
-            onChange={(e) => setBotDifficulty(e.target.value)}
-          >
-            <option value="beginner">Beginner</option>
-            <option value="easy">Easy</option>
-            <option value="medium">Medium</option>
-            <option value="hard">Hard</option>
-            <option value="extreme">Extreme</option>
-          </select>
+          <div className="difficulty-pills">
+            {['beginner', 'easy', 'medium', 'hard', 'extreme'].map(diff => (
+              <button 
+                key={diff}
+                className={`diff-pill ${botDifficulty === diff ? 'active' : ''}`}
+                onClick={() => setBotDifficulty(diff)}
+              >
+                {diff.charAt(0).toUpperCase() + diff.slice(1)}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
