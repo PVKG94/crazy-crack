@@ -272,37 +272,44 @@ io.on('connection', (socket) => {
         const room = rooms[roomCode];
         if (room && room.players[0].id === socket.id) {
             room.state = 'setup';
+            // Send lobby_update first so all clients have a fresh player list on entry
+            io.to(roomCode).emit('lobby_update', room.players.map(p => ({...p, board: undefined})));
             io.to(roomCode).emit('game_started', { state: 'setup' });
         }
     });
 
-    socket.on('board_ready', (data) => {
+    socket.on('board_ready', (data, callback) => {
         const roomCodeTarget = typeof data === 'string' ? data : data.roomCode;
         const room = rooms[roomCodeTarget];
-        if (!room) return;
+        if (!room) return callback && callback({ success: false, message: 'Room not found' });
 
         const player = room.players.find(p => p.id === socket.id);
-        if (player) {
-            player.isReady = true;
-            if (data.board) player.board = data.board;
-            io.to(roomCodeTarget).emit('player_ready_update', room.players.map(p => ({...p, board: undefined})));
+        if (!player) return callback && callback({ success: false, message: 'Player not in room' });
 
-            const allReady = room.players.every(p => p.isReady);
-            if (allReady) {
-                room.state = 'playing';
-                room.turnIndex = 0;
-                io.to(roomCodeTarget).emit('all_players_ready', { 
-                    players: room.players.map(p => ({...p, board: undefined})),
-                    currentTurnId: room.players[room.turnIndex].id 
-                });
-                
-                // If the very first turn is assigned to a Bot, kick it off
-                if (room.players[room.turnIndex].isBot) {
-                    setTimeout(() => takeBotTurn(room.code, room.players[room.turnIndex]), 2000);
-                }
+        player.isReady = true;
+        if (data.board) player.board = data.board;
+
+        // Confirm receipt to the sender
+        if (callback) callback({ success: true });
+
+        io.to(roomCodeTarget).emit('player_ready_update', room.players.map(p => ({...p, board: undefined})));
+
+        const allReady = room.players.every(p => p.isReady);
+        if (allReady) {
+            room.state = 'playing';
+            room.turnIndex = 0;
+            io.to(roomCodeTarget).emit('all_players_ready', { 
+                players: room.players.map(p => ({...p, board: undefined})),
+                currentTurnId: room.players[room.turnIndex].id 
+            });
+            
+            // If the very first turn is assigned to a Bot, kick it off
+            if (room.players[room.turnIndex].isBot) {
+                setTimeout(() => takeBotTurn(room.code, room.players[room.turnIndex]), 2000);
             }
         }
     });
+
 
     socket.on('call_number', (data) => {
         const { roomCode, number } = data;

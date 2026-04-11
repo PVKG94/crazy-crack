@@ -9,7 +9,7 @@ function loadStats() {
   return { gamesPlayed: 0, wins: 0, totalLines: 0 };
 }
 
-export default function MainMenu({ profile, onCreateRoom, onJoinRoom, onPlayBot, onBack }) {
+export default function MainMenu({ profile, onCreateRoom, onJoinRoom, onPlayBot, onBack, isConnected }) {
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [roomCode, setRoomCode] = useState('');
   const [botDifficulty, setBotDifficulty] = useState('medium');
@@ -61,13 +61,21 @@ export default function MainMenu({ profile, onCreateRoom, onJoinRoom, onPlayBot,
       )}
 
       <div className="menu-actions">
-        <button className="primary-btn create-btn" onClick={onCreateRoom}>
-          Create Room
+        <button 
+          className="primary-btn create-btn" 
+          onClick={onCreateRoom}
+          disabled={!isConnected}
+        >
+          {!isConnected ? 'Waking Server...' : 'Create Room'}
         </button>
 
         {!showJoinInput ? (
-          <button className="secondary-btn" onClick={() => setShowJoinInput(true)}>
-            Join Room
+          <button 
+            className="secondary-btn" 
+            onClick={() => setShowJoinInput(true)}
+            disabled={!isConnected}
+          >
+            {!isConnected ? 'Please Wait...' : 'Join Room'}
           </button>
         ) : (
           <div className="join-container">

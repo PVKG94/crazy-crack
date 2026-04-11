@@ -7,7 +7,9 @@ const THEMES = [
     { id: 'synthwave', name: '🟣 Synthwave' },
     { id: 'hacker', name: '🟢 Hacker Grid' },
     { id: 'ocean', name: '🔵 Ocean' },
-    { id: 'sunset', name: '🟠 Sunset' }
+    { id: 'sunset', name: '🟠 Sunset' },
+    { id: 'midnight', name: '⚫ Midnight (Dark)' },
+    { id: 'slate', name: '🔘 Slate (Dark)' }
 ];
 
 const SettingsModal = ({ isOpen, onClose, currentProfile, onUpdateProfile }) => {

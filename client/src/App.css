@@ -333,3 +333,10 @@ h1 {
   border-color: var(--accent-color);
   color: var(--accent-color);
 }
+
+/* Server Status Booting UI */
+.server-status-container { margin-top: 1rem; display: flex; justify-content: center; align-items: center; }
+.status.online { color: #4ade80; font-size: 0.9rem; margin: 0; text-shadow: 0 0 5px rgba(74, 222, 128, 0.4); }
+.status.booting { display: flex; align-items: center; gap: 0.5rem; color: var(--accent-color); font-size: 0.9rem; background: rgba(244, 63, 94, 0.1); padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid rgba(244, 63, 94, 0.3); }
+.spinner { width: 16px; height: 16px; border: 2px solid rgba(244, 63, 94, 0.3); border-top-color: var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }

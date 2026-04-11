@@ -122,6 +122,46 @@
   --cell-active-bg: rgba(245, 158, 11, 0.25);
 }
 
+[data-theme='midnight'] {
+  --bg-color: #000000;
+  --text-color: #a1a1aa;
+  --accent-color: #52525b;
+  
+  --glow-pop-1: #52525b;
+  --glow-pop-2: #71717a;
+  
+  --glow-burn-1: #3f3f46;
+  --glow-burn-2: #52525b;
+
+  --glow-melt-1: #27272a;
+  --glow-melt-2: #3f3f46;
+
+  --panel-bg: rgba(255, 255, 255, 0.02);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --cell-hover-bg: rgba(255, 255, 255, 0.08);
+  --cell-active-bg: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme='slate'] {
+  --bg-color: #0f172a;
+  --text-color: #94a3b8;
+  --accent-color: #475569;
+  
+  --glow-pop-1: #475569;
+  --glow-pop-2: #64748b;
+  
+  --glow-burn-1: #334155;
+  --glow-burn-2: #475569;
+
+  --glow-melt-1: #1e293b;
+  --glow-melt-2: #334155;
+
+  --panel-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.07);
+  --cell-hover-bg: rgba(255, 255, 255, 0.06);
+  --cell-active-bg: rgba(255, 255, 255, 0.03);
+}
+
 * {
   box-sizing: border-box;
   -webkit-touch-callout: none;

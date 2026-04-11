@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { io } from 'socket.io-client'
+import { StatusBar } from '@capacitor/status-bar'
 import { LocalGameEngine } from './services/LocalGameEngine'
 import './App.css'
 import ProfileSetup from './components/ProfileSetup'
@@ -52,6 +53,18 @@ function App() {
   const [pendingJoinCode, setPendingJoinCode] = useState(null);
   const [isSpectator, setIsSpectator] = useState(false);
   const [spectatorCalledNumbers, setSpectatorCalledNumbers] = useState([]);
+
+  // Hide mobile status bar for true fullscreen game experience
+  useEffect(() => {
+    const hideUI = async () => {
+      try {
+        await StatusBar.hide();
+      } catch (e) {
+        // Will throw quietly on web dev environment, safe to ignore
+      }
+    };
+    hideUI();
+  }, []);
 
   useEffect(() => {
     function onConnect() { setIsConnected(true); }
@@ -193,6 +206,20 @@ function App() {
     }
   }, [pendingJoinCode, profile, isConnected, room]);
 
+  // Handle transparent socket reconnections (e.g., app wakes from sleep)
+  const roomRef = useRef(room);
+  useEffect(() => { roomRef.current = room; }, [room]);
+
+  const profileRef = useRef(profile);
+  useEffect(() => { profileRef.current = profile; }, [profile]);
+
+  useEffect(() => {
+     if (isConnected && roomRef.current && profileRef.current && socket === networkSocket) {
+         // Silently re-sync our new generated Socket ID with the backend's room state
+         socket.emit('join_room', { roomCode: roomRef.current, profile: profileRef.current }, () => {});
+     }
+  }, [isConnected, socket]);
+
   const handleProfileComplete = (newProfile) => {
     setProfile(newProfile);
   };
@@ -301,6 +328,7 @@ function App() {
           onJoinRoom={handleJoinRoom}
           onPlayBot={handlePlayBot}
           onBack={handleBackToProfile}
+          isConnected={isConnected}
         />
       ) : gameState === 'waiting' ? (
         <Lobby 
@@ -362,7 +390,16 @@ function App() {
       )}
 
       {(!room || gameState === 'waiting') && (
-         <p className="status">Server Connection: {isConnected ? '🟢 Connected' : '🔴 Offline'}</p>
+         <div className="server-status-container">
+            {isConnected ? (
+              <p className="status online">🟢 Server Online</p>
+            ) : (
+              <div className="status booting">
+                <div className="spinner"></div>
+                <p>Waking Multiplayer Server... (this may take up to 50s)</p>
+              </div>
+            )}
+         </div>
       )}
 
       {winnerAnnouncement && (

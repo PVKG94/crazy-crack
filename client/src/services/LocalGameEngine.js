@@ -142,18 +142,26 @@ export class LocalGameEngine {
             case 'start_game_request': {
                 if (this.room) {
                     this.room.state = 'setup';
+                    // Send lobby_update first so App.jsx has fresh player data before setup screen
+                    this._trigger('lobby_update', this.room.players.map(p => ({...p, board: undefined})));
                     this._trigger('game_started', { state: 'setup' });
                 }
                 break;
             }
             case 'board_ready': {
                 const reqRoomCode = typeof data === 'string' ? data : data.roomCode;
-                if (!this.room || this.room.code !== reqRoomCode) return;
+                if (!this.room || this.room.code !== reqRoomCode) {
+                    if (callback) callback({ success: false, message: 'Room not found' });
+                    return;
+                }
 
                 const player = this.room.players[0]; // local player is always index 0
                 player.isReady = true;
                 if (data.board) player.board = data.board;
-                
+
+                // Confirm receipt to sender
+                if (callback) callback({ success: true });
+
                 this._trigger('player_ready_update', this.room.players.map(p => ({...p, board: undefined})));
 
                 const allReady = this.room.players.every(p => p.isReady);
@@ -171,6 +179,7 @@ export class LocalGameEngine {
                 }
                 break;
             }
+
             case 'call_number': {
                 const { roomCode, number } = data;
                 if (!this.room || this.room.code !== roomCode || this.room.state !== 'playing') return;

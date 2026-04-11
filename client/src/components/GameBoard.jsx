@@ -17,14 +17,25 @@ const GridCell = memo(function GridCell({ num, isCalled, isClickable, isFlashing
   );
 });
 
+function generateShuffledBoard() {
+  const nums = Array.from({length: 100}, (_, i) => i + 1);
+  for (let i = nums.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [nums[i], nums[j]] = [nums[j], nums[i]];
+  }
+  return nums;
+}
+
 export function GameBoard({ socket, roomCode, gameState, players, currentTurnId, myId, profile, onLeave, isSpectator, spectatorCalledNumbers }) {
-  const [board, setBoard] = useState(Array(100).fill(null));
+  // Auto-generate a shuffled board immediately so user can click ready right away
+  const [board, setBoard] = useState(() => generateShuffledBoard());
   const [calledNumbers, setCalledNumbers] = useState(() => {
     return spectatorCalledNumbers ? new Set(spectatorCalledNumbers) : new Set();
   });
   const [lines, setLines] = useState(0);
   const [completedLinesArr, setCompletedLinesArr] = useState([]);
   const [lastCalledNumber, setLastCalledNumber] = useState(null);
+  const [isSubmittingReady, setIsSubmittingReady] = useState(false);
 
   const [spectatedPlayerId, setSpectatedPlayerId] = useState(null);
   const [spectatedBoard, setSpectatedBoard] = useState(null);
@@ -111,19 +122,20 @@ export function GameBoard({ socket, roomCode, gameState, players, currentTurnId,
   }, [board, calledNumbers, lines, completedLinesArr.length, roomCode, socket]);
 
   const handleRandomize = useCallback(() => {
-    const nums = Array.from({length: 100}, (_, i) => i + 1);
-    for (let i = nums.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [nums[i], nums[j]] = [nums[j], nums[i]];
-    }
-    setBoard(nums);
+    setBoard(generateShuffledBoard());
   }, []);
 
   const handleReady = useCallback(() => {
-    if (!board.includes(null)) {
-        socket.emit('board_ready', { roomCode, board });
+    if (!board.includes(null) && !isSubmittingReady) {
+        setIsSubmittingReady(true);
+        socket.emit('board_ready', { roomCode, board }, (ack) => {
+            // If server didn't confirm (e.g. disconnected), reset so user can retry
+            if (ack && !ack.success) {
+                setIsSubmittingReady(false);
+            }
+        });
     }
-  }, [board, roomCode, socket]);
+  }, [board, roomCode, socket, isSubmittingReady]);
 
   // Memoized click handler — stable reference for cell memoization
   const handleCellClick = useCallback((number) => {
@@ -145,19 +157,44 @@ export function GameBoard({ socket, roomCode, gameState, players, currentTurnId,
   // Setup Phase Render
   if (gameState === 'setup') {
     const myPlayer = players.find(p => p.id === myId);
-    if (myPlayer?.isReady) {
-        return <div className="setup-container"><h3>Waiting for others to finish...</h3></div>;
+    const alreadyReady = myPlayer?.isReady || isSubmittingReady;
+    if (alreadyReady) {
+        // Exclude myself from "still waiting" — I already submitted
+        const notReady = players.filter(p => !p.isReady && !p.isBot && p.id !== myId);
+        return (
+            <div className="setup-container">
+                <h3>✅ Board submitted! Waiting for others...</h3>
+                {notReady.length > 0 ? (
+                    <div style={{color: '#888', marginTop: '1rem', fontSize: '0.9rem', textAlign: 'center'}}>
+                        Still waiting for:<br/>
+                        {notReady.map(p => (
+                            <div key={p.id} style={{color: 'var(--accent-color)', fontWeight: 'bold', marginTop: '0.3rem'}}>
+                                ⏳ {p.username}
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div style={{color: '#aaa', marginTop: '1rem', fontSize: '0.9rem', textAlign: 'center'}}>
+                        <div className="spinner" style={{margin: '0 auto 0.5rem'}}></div>
+                        Starting game...
+                    </div>
+                )}
+            </div>
+        );
     }
 
     return (
         <div className="setup-container">
             <button className="back-btn" onClick={onLeave}>← Back</button>
-            <h3>Place your numbers</h3>
+            <h3>Your Grid is Ready!</h3>
+            <p style={{color:'#aaa', fontSize:'0.85rem', margin:'-0.5rem 0 0.5rem', textAlign:'center'}}>
+              Re-shuffle if you want different numbers
+            </p>
             <div className="setup-actions">
-                <button className="secondary-btn" onClick={handleRandomize}>Randomize Grid</button>
+                <button className="secondary-btn" onClick={handleRandomize}>🔀 Re-shuffle</button>
             </div>
             
-            <div className={`grid-board ${!board.includes(null) ? 'ready' : ''}`}>
+            <div className={`grid-board ready`}>
                 {board.map((num, i) => (
                     <div key={i} className="grid-cell empty">{num}</div>
                 ))}
@@ -165,10 +202,9 @@ export function GameBoard({ socket, roomCode, gameState, players, currentTurnId,
 
             <button 
                 className="primary-btn ready-btn" 
-                disabled={board.includes(null)}
                 onClick={handleReady}
             >
-                Start Game!
+                ✅ I'm Ready!
             </button>
         </div>
     );
