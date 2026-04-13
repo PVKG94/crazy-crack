@@ -10,6 +10,10 @@ export default function ChatSidebar({ socket, roomCode, profile }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showEmojis, setShowEmojis] = useState(false);
   const chatBottomRef = useRef(null);
+  const isOpenRef = useRef(isOpen);
+
+  // Keep ref in sync so the listener closure always has the latest value
+  useEffect(() => { isOpenRef.current = isOpen; }, [isOpen]);
 
   useEffect(() => {
     const handleNewMessage = (msgData) => {
@@ -17,7 +21,7 @@ export default function ChatSidebar({ socket, roomCode, profile }) {
       if (msgData.sender === profile.username) return;
 
       setMessages((prev) => [...prev, msgData]);
-      if (!isOpen) {
+      if (!isOpenRef.current) {
         setUnreadCount((prev) => prev + 1);
       }
     };
@@ -27,7 +31,7 @@ export default function ChatSidebar({ socket, roomCode, profile }) {
     return () => {
       socket.off('chat_message', handleNewMessage);
     };
-  }, [socket, isOpen, profile.username]);
+  }, [socket, profile.username]);
 
   useEffect(() => {
     if (isOpen) {

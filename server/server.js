@@ -248,9 +248,15 @@ io.on('connection', (socket) => {
 
     socket.on('get_room_data', (roomCode, callback) => {
         if (!rooms[roomCode]) return callback({ success: false });
+        const room = rooms[roomCode];
         // Strip out bot boards so human players don't cheat by reading the socket payload
-        const safePlayers = rooms[roomCode].players.map(p => ({ ...p, board: undefined }));
-        callback({ success: true, players: safePlayers, state: rooms[roomCode].state });
+        const safePlayers = room.players.map(p => ({ ...p, board: undefined }));
+        callback({
+            success: true,
+            players: safePlayers,
+            state: room.state,
+            currentTurnId: room.players[room.turnIndex]?.id || null
+        });
     });
 
     socket.on('get_spectator_board', (data, callback) => {
@@ -289,20 +295,31 @@ io.on('connection', (socket) => {
         player.isReady = true;
         if (data.board) player.board = data.board;
 
-        // Confirm receipt to the sender
-        if (callback) callback({ success: true });
-
-        io.to(roomCodeTarget).emit('player_ready_update', room.players.map(p => ({...p, board: undefined})));
-
         const allReady = room.players.every(p => p.isReady);
+
         if (allReady) {
             room.state = 'playing';
             room.turnIndex = 0;
-            io.to(roomCodeTarget).emit('all_players_ready', { 
+        }
+
+        // Confirm receipt — include game-start data so last submitter can transition via ack
+        if (callback) callback({
+            success: true,
+            allReady,
+            ...(allReady ? {
                 players: room.players.map(p => ({...p, board: undefined})),
-                currentTurnId: room.players[room.turnIndex].id 
+                currentTurnId: room.players[room.turnIndex].id
+            } : {})
+        });
+
+        io.to(roomCodeTarget).emit('player_ready_update', room.players.map(p => ({...p, board: undefined})));
+
+        if (allReady) {
+            io.to(roomCodeTarget).emit('all_players_ready', {
+                players: room.players.map(p => ({...p, board: undefined})),
+                currentTurnId: room.players[room.turnIndex].id
             });
-            
+
             // If the very first turn is assigned to a Bot, kick it off
             if (room.players[room.turnIndex].isBot) {
                 setTimeout(() => takeBotTurn(room.code, room.players[room.turnIndex]), 2000);

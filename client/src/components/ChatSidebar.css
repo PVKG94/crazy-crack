@@ -28,18 +28,25 @@
   position: absolute;
   top: -5px;
   right: -5px;
-  background: white;
-  color: var(--accent-color);
-  font-size: 1rem;
+  background: #ff3b5c;
+  color: white;
+  font-size: 0.75rem;
   font-weight: bold;
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 11px;
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 0 10px rgba(0,0,0,0.5);
-  animation: bounce 0.5s ease;
+  box-shadow: 0 0 10px rgba(255, 59, 92, 0.6);
+  animation: badge-pulse 1.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(255, 59, 92, 0.6); }
+  50% { transform: scale(1.15); box-shadow: 0 0 18px rgba(255, 59, 92, 0.9); }
 }
 
 @keyframes bounce {

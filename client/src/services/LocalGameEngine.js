@@ -159,18 +159,29 @@ export class LocalGameEngine {
                 player.isReady = true;
                 if (data.board) player.board = data.board;
 
-                // Confirm receipt to sender
-                if (callback) callback({ success: true });
-
-                this._trigger('player_ready_update', this.room.players.map(p => ({...p, board: undefined})));
-
                 const allReady = this.room.players.every(p => p.isReady);
+
                 if (allReady) {
                     this.room.state = 'playing';
                     this.room.turnIndex = 0;
+                }
+
+                // Confirm receipt — include game-start data if all ready (mirrors server)
+                if (callback) callback({
+                    success: true,
+                    allReady,
+                    ...(allReady ? {
+                        players: this.room.players.map(p => ({...p, board: undefined})),
+                        currentTurnId: this.room.players[this.room.turnIndex].id
+                    } : {})
+                });
+
+                this._trigger('player_ready_update', this.room.players.map(p => ({...p, board: undefined})));
+
+                if (allReady) {
                     this._trigger('all_players_ready', {
                         players: this.room.players.map(p => ({...p, board: undefined})),
-                        currentTurnId: this.room.players[this.room.turnIndex].id 
+                        currentTurnId: this.room.players[this.room.turnIndex].id
                     });
 
                     if (this.room.players[this.room.turnIndex].isBot) {
@@ -179,6 +190,7 @@ export class LocalGameEngine {
                 }
                 break;
             }
+
 
             case 'call_number': {
                 const { roomCode, number } = data;

@@ -26,7 +26,7 @@ function generateShuffledBoard() {
   return nums;
 }
 
-export function GameBoard({ socket, roomCode, gameState, players, currentTurnId, myId, profile, onLeave, isSpectator, spectatorCalledNumbers }) {
+export function GameBoard({ socket, roomCode, gameState, players, currentTurnId, myId, profile, onLeave, isSpectator, spectatorCalledNumbers, onAllReady }) {
   // Auto-generate a shuffled board immediately so user can click ready right away
   const [board, setBoard] = useState(() => generateShuffledBoard());
   const [calledNumbers, setCalledNumbers] = useState(() => {
@@ -129,13 +129,18 @@ export function GameBoard({ socket, roomCode, gameState, players, currentTurnId,
     if (!board.includes(null) && !isSubmittingReady) {
         setIsSubmittingReady(true);
         socket.emit('board_ready', { roomCode, board }, (ack) => {
-            // If server didn't confirm (e.g. disconnected), reset so user can retry
-            if (ack && !ack.success) {
+            if (!ack || !ack.success) {
+                // Server rejected or no ack (e.g. lost connection) — let user retry
                 setIsSubmittingReady(false);
+                return;
+            }
+            if (ack.allReady && onAllReady) {
+                // We were the last to submit — start game directly via ack (fastest path)
+                onAllReady({ players: ack.players, currentTurnId: ack.currentTurnId });
             }
         });
     }
-  }, [board, roomCode, socket, isSubmittingReady]);
+  }, [board, roomCode, socket, isSubmittingReady, onAllReady]);
 
   // Memoized click handler — stable reference for cell memoization
   const handleCellClick = useCallback((number) => {

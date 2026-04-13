@@ -220,6 +220,27 @@ function App() {
      }
   }, [isConnected, socket]);
 
+  // RELIABILITY FALLBACK: Poll server state during setup phase
+  // Catches cases where the all_players_ready event is dropped (common on mobile)
+  useEffect(() => {
+    if (gameState !== 'setup' || !room) return;
+
+    const poll = setInterval(() => {
+      socket.emit('get_room_data', room, (res) => {
+        if (!res.success) return;
+        // Always sync player data — catches dropped player_ready_update events
+        if (res.players) setPlayers(res.players);
+        if (res.state === 'playing') {
+          // Server already transitioned — we missed the all_players_ready event
+          if (res.currentTurnId) setCurrentTurnId(res.currentTurnId);
+          setGameState('playing');
+        }
+      });
+    }, 2500);
+
+    return () => clearInterval(poll);
+  }, [gameState, room, socket]);
+
   const handleProfileComplete = (newProfile) => {
     setProfile(newProfile);
   };
@@ -349,6 +370,12 @@ function App() {
             onLeave={requestLeaveRoom}
             isSpectator={isSpectator}
             spectatorCalledNumbers={spectatorCalledNumbers}
+            onAllReady={(data) => {
+              // Called by board_ready ack when this client was the last to submit
+              setPlayers(data.players);
+              setCurrentTurnId(data.currentTurnId);
+              setGameState('playing');
+            }}
         />
       ) : (
         <div className="finished-screen">
