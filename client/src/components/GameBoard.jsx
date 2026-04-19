@@ -37,6 +37,13 @@ export function GameBoard({ socket, roomCode, gameState, players, currentTurnId,
   const [lastCalledNumber, setLastCalledNumber] = useState(null);
   const [isSubmittingReady, setIsSubmittingReady] = useState(false);
 
+  // Reset submitting state if gameState changes (e.g., game started while we were waiting)
+  useEffect(() => {
+    if (gameState !== 'setup') {
+      setIsSubmittingReady(false);
+    }
+  }, [gameState]);
+
   const [spectatedPlayerId, setSpectatedPlayerId] = useState(null);
   const [spectatedBoard, setSpectatedBoard] = useState(null);
 
@@ -128,7 +135,14 @@ export function GameBoard({ socket, roomCode, gameState, players, currentTurnId,
   const handleReady = useCallback(() => {
     if (!board.includes(null) && !isSubmittingReady) {
         setIsSubmittingReady(true);
+
+        // Timeout fallback: if ack never arrives (connection issue), allow retry
+        const ackTimeout = setTimeout(() => {
+            setIsSubmittingReady(false);
+        }, 8000);
+
         socket.emit('board_ready', { roomCode, board }, (ack) => {
+            clearTimeout(ackTimeout);
             if (!ack || !ack.success) {
                 // Server rejected or no ack (e.g. lost connection) — let user retry
                 setIsSubmittingReady(false);

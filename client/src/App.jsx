@@ -83,9 +83,15 @@ function App() {
     }
 
     function onAllPlayersReady(data) {
-        setPlayers(data.players);
-        setCurrentTurnId(data.currentTurnId);
-        setGameState('playing');
+        // Guard: only process if we're still in setup
+        setGameState(prev => {
+          if (prev === 'setup') {
+            setPlayers(data.players);
+            setCurrentTurnId(data.currentTurnId);
+            return 'playing';
+          }
+          return prev;
+        });
     }
 
     function onTurnUpdate(data) {
@@ -220,23 +226,32 @@ function App() {
      }
   }, [isConnected, socket]);
 
-  // RELIABILITY FALLBACK: Poll server state during setup phase
-  // Catches cases where the all_players_ready event is dropped (common on mobile)
+  // RELIABILITY FALLBACK: Poll server state during setup AND waiting phases
+  // Catches cases where game_started or all_players_ready events are dropped (common on mobile)
   useEffect(() => {
-    if (gameState !== 'setup' || !room) return;
+    if (!room) return;
+    if (gameState !== 'waiting' && gameState !== 'setup') return;
 
     const poll = setInterval(() => {
       socket.emit('get_room_data', room, (res) => {
         if (!res.success) return;
-        // Always sync player data — catches dropped player_ready_update events
+
+        // Always sync player data — catches dropped lobby_update / player_ready_update events
         if (res.players) setPlayers(res.players);
-        if (res.state === 'playing') {
+
+        if (gameState === 'waiting' && (res.state === 'setup' || res.state === 'playing')) {
+          // Server already transitioned — we missed the game_started event
+          setGameState(res.state === 'playing' ? 'playing' : 'setup');
+          if (res.state === 'playing' && res.currentTurnId) {
+            setCurrentTurnId(res.currentTurnId);
+          }
+        } else if (gameState === 'setup' && res.state === 'playing') {
           // Server already transitioned — we missed the all_players_ready event
           if (res.currentTurnId) setCurrentTurnId(res.currentTurnId);
           setGameState('playing');
         }
       });
-    }, 2500);
+    }, 1500);
 
     return () => clearInterval(poll);
   }, [gameState, room, socket]);
@@ -372,9 +387,15 @@ function App() {
             spectatorCalledNumbers={spectatorCalledNumbers}
             onAllReady={(data) => {
               // Called by board_ready ack when this client was the last to submit
-              setPlayers(data.players);
-              setCurrentTurnId(data.currentTurnId);
-              setGameState('playing');
+              // Guard to avoid double-processing with all_players_ready event
+              setGameState(prev => {
+                if (prev === 'setup') {
+                  setPlayers(data.players);
+                  setCurrentTurnId(data.currentTurnId);
+                  return 'playing';
+                }
+                return prev;
+              });
             }}
         />
       ) : (

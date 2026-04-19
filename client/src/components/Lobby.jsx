@@ -5,6 +5,7 @@ export default function Lobby({ socket, roomCode, profile, onLeave }) {
   const [players, setPlayers] = useState([]);
   const [isHost, setIsHost] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
 
   useEffect(() => {
     socket.emit('get_room_data', roomCode, (response) => {
@@ -29,7 +30,22 @@ export default function Lobby({ socket, roomCode, profile, onLeave }) {
   }, [socket, roomCode, profile]);
 
   const handleStartGame = () => {
-    socket.emit('start_game_request', roomCode);
+    if (isStarting) return;
+    setIsStarting(true);
+
+    // Timeout fallback: if ack never arrives (connection issue), allow retry
+    const ackTimeout = setTimeout(() => {
+      setIsStarting(false);
+    }, 8000);
+
+    socket.emit('start_game_request', roomCode, (ack) => {
+      clearTimeout(ackTimeout);
+      if (!ack || !ack.success) {
+        setIsStarting(false);
+        if (ack?.message) alert(ack.message);
+      }
+      // On success, App.jsx will transition via game_started event
+    });
   };
 
   const handleCopyCode = async () => {
@@ -125,9 +141,9 @@ export default function Lobby({ socket, roomCode, profile, onLeave }) {
         <button 
           className="primary-btn start-btn" 
           onClick={handleStartGame}
-          disabled={players.length < 2}
+          disabled={players.length < 2 || isStarting}
         >
-          {players.length < 2 ? 'Waiting for friends...' : 'Start Game'}
+          {isStarting ? '⏳ Starting...' : players.length < 2 ? 'Waiting for friends...' : 'Start Game'}
         </button>
       ) : (
         <p className="waiting-text">Waiting for Host to start the game...</p>

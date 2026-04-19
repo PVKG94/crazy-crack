@@ -251,11 +251,13 @@ io.on('connection', (socket) => {
         const room = rooms[roomCode];
         // Strip out bot boards so human players don't cheat by reading the socket payload
         const safePlayers = room.players.map(p => ({ ...p, board: undefined }));
+        const safeIndex = Math.min(room.turnIndex, room.players.length - 1);
         callback({
             success: true,
             players: safePlayers,
             state: room.state,
-            currentTurnId: room.players[room.turnIndex]?.id || null
+            calledNumbers: room.calledNumbers || [],
+            currentTurnId: room.players[safeIndex]?.id || null
         });
     });
 
@@ -274,14 +276,30 @@ io.on('connection', (socket) => {
         callback({ success: true, board: target.board });
     });
 
-    socket.on('start_game_request', (roomCode) => {
+    socket.on('start_game_request', (roomCode, callback) => {
         const room = rooms[roomCode];
-        if (room && room.players[0].id === socket.id) {
-            room.state = 'setup';
-            // Send lobby_update first so all clients have a fresh player list on entry
-            io.to(roomCode).emit('lobby_update', room.players.map(p => ({...p, board: undefined})));
-            io.to(roomCode).emit('game_started', { state: 'setup' });
+        if (!room) {
+            if (callback) callback({ success: false, message: 'Room not found' });
+            return;
         }
+        if (room.players[0].id !== socket.id) {
+            if (callback) callback({ success: false, message: 'Only the host can start the game' });
+            return;
+        }
+        if (room.players.length < 2) {
+            if (callback) callback({ success: false, message: 'Need at least 2 players to start' });
+            return;
+        }
+        if (room.state !== 'waiting') {
+            if (callback) callback({ success: false, message: 'Game already started' });
+            return;
+        }
+
+        room.state = 'setup';
+        // Send lobby_update first so all clients have a fresh player list on entry
+        io.to(roomCode).emit('lobby_update', room.players.map(p => ({...p, board: undefined})));
+        io.to(roomCode).emit('game_started', { state: 'setup' });
+        if (callback) callback({ success: true });
     });
 
     socket.on('board_ready', (data, callback) => {
@@ -292,31 +310,38 @@ io.on('connection', (socket) => {
         const player = room.players.find(p => p.id === socket.id);
         if (!player) return callback && callback({ success: false, message: 'Player not in room' });
 
+        // Prevent double-submission
+        if (player.isReady) {
+            return callback && callback({ success: true, allReady: room.state === 'playing' });
+        }
+
         player.isReady = true;
         if (data.board) player.board = data.board;
 
         const allReady = room.players.every(p => p.isReady);
+        console.log(`[board_ready] ${player.username} ready in ${roomCodeTarget}. All ready: ${allReady}`);
 
         if (allReady) {
             room.state = 'playing';
             room.turnIndex = 0;
         }
 
+        const safePlayers = room.players.map(p => ({...p, board: undefined}));
+
         // Confirm receipt — include game-start data so last submitter can transition via ack
         if (callback) callback({
             success: true,
             allReady,
             ...(allReady ? {
-                players: room.players.map(p => ({...p, board: undefined})),
+                players: safePlayers,
                 currentTurnId: room.players[room.turnIndex].id
             } : {})
         });
 
-        io.to(roomCodeTarget).emit('player_ready_update', room.players.map(p => ({...p, board: undefined})));
-
         if (allReady) {
+            // Emit game-start FIRST so clients transition before processing ready update
             io.to(roomCodeTarget).emit('all_players_ready', {
-                players: room.players.map(p => ({...p, board: undefined})),
+                players: safePlayers,
                 currentTurnId: room.players[room.turnIndex].id
             });
 
@@ -324,6 +349,10 @@ io.on('connection', (socket) => {
             if (room.players[room.turnIndex].isBot) {
                 setTimeout(() => takeBotTurn(room.code, room.players[room.turnIndex]), 2000);
             }
+        } else {
+            // Only send partial-ready update when NOT all ready
+            // (avoids redundant emit when all_players_ready already contains players)
+            io.to(roomCodeTarget).emit('player_ready_update', safePlayers);
         }
     });
 

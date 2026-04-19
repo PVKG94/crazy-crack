@@ -136,16 +136,34 @@ export class LocalGameEngine {
             case 'get_room_data': {
                 if (!this.room) return callback({ success: false });
                 const safePlayers = this.room.players.map(p => ({ ...p, board: undefined }));
-                callback({ success: true, players: safePlayers, state: this.room.state });
+                const safeIndex = Math.min(this.room.turnIndex, this.room.players.length - 1);
+                callback({
+                    success: true,
+                    players: safePlayers,
+                    state: this.room.state,
+                    calledNumbers: this.room.calledNumbers || [],
+                    currentTurnId: this.room.players[safeIndex]?.id || null
+                });
                 break;
             }
             case 'start_game_request': {
-                if (this.room) {
-                    this.room.state = 'setup';
-                    // Send lobby_update first so App.jsx has fresh player data before setup screen
-                    this._trigger('lobby_update', this.room.players.map(p => ({...p, board: undefined})));
-                    this._trigger('game_started', { state: 'setup' });
+                if (!this.room) {
+                    if (callback) callback({ success: false, message: 'Room not found' });
+                    return;
                 }
+                if (this.room.players.length < 2) {
+                    if (callback) callback({ success: false, message: 'Need at least 2 players' });
+                    return;
+                }
+                if (this.room.state !== 'waiting') {
+                    if (callback) callback({ success: false, message: 'Game already started' });
+                    return;
+                }
+                this.room.state = 'setup';
+                // Send lobby_update first so App.jsx has fresh player data before setup screen
+                this._trigger('lobby_update', this.room.players.map(p => ({...p, board: undefined})));
+                this._trigger('game_started', { state: 'setup' });
+                if (callback) callback({ success: true });
                 break;
             }
             case 'board_ready': {
@@ -156,6 +174,13 @@ export class LocalGameEngine {
                 }
 
                 const player = this.room.players[0]; // local player is always index 0
+
+                // Prevent double-submission
+                if (player.isReady) {
+                    if (callback) callback({ success: true, allReady: this.room.state === 'playing' });
+                    return;
+                }
+
                 player.isReady = true;
                 if (data.board) player.board = data.board;
 
@@ -166,27 +191,31 @@ export class LocalGameEngine {
                     this.room.turnIndex = 0;
                 }
 
+                const safePlayers = this.room.players.map(p => ({...p, board: undefined}));
+
                 // Confirm receipt — include game-start data if all ready (mirrors server)
                 if (callback) callback({
                     success: true,
                     allReady,
                     ...(allReady ? {
-                        players: this.room.players.map(p => ({...p, board: undefined})),
+                        players: safePlayers,
                         currentTurnId: this.room.players[this.room.turnIndex].id
                     } : {})
                 });
 
-                this._trigger('player_ready_update', this.room.players.map(p => ({...p, board: undefined})));
-
                 if (allReady) {
+                    // Emit game-start FIRST so clients transition before processing ready update
                     this._trigger('all_players_ready', {
-                        players: this.room.players.map(p => ({...p, board: undefined})),
+                        players: safePlayers,
                         currentTurnId: this.room.players[this.room.turnIndex].id
                     });
 
                     if (this.room.players[this.room.turnIndex].isBot) {
                         setTimeout(() => this.takeBotTurn(), 2000);
                     }
+                } else {
+                    // Only send partial-ready update when NOT all ready
+                    this._trigger('player_ready_update', safePlayers);
                 }
                 break;
             }
