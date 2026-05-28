@@ -83,15 +83,11 @@ function App() {
     }
 
     function onAllPlayersReady(data) {
-        // Guard: only process if we're still in setup
-        setGameState(prev => {
-          if (prev === 'setup') {
-            setPlayers(data.players);
-            setCurrentTurnId(data.currentTurnId);
-            return 'playing';
-          }
-          return prev;
-        });
+        // Update players and turn data at the top level (NOT inside a state updater)
+        // React 19 requires updater functions to be pure — side effects get dropped
+        setPlayers(data.players);
+        setCurrentTurnId(data.currentTurnId);
+        setGameState(prev => prev !== 'finished' ? 'playing' : prev);
     }
 
     function onTurnUpdate(data) {
@@ -387,15 +383,9 @@ function App() {
             spectatorCalledNumbers={spectatorCalledNumbers}
             onAllReady={(data) => {
               // Called by board_ready ack when this client was the last to submit
-              // Guard to avoid double-processing with all_players_ready event
-              setGameState(prev => {
-                if (prev === 'setup') {
-                  setPlayers(data.players);
-                  setCurrentTurnId(data.currentTurnId);
-                  return 'playing';
-                }
-                return prev;
-              });
+              setPlayers(data.players);
+              setCurrentTurnId(data.currentTurnId);
+              setGameState(prev => prev !== 'finished' ? 'playing' : prev);
             }}
         />
       ) : (
